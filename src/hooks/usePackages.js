@@ -5,7 +5,12 @@ export function usePackages(initialProject = 'All Projects', currentUser = null)
   const isPMCareermate = currentUser?.role && (currentUser.role.toLowerCase().includes('careermate') || currentUser.role.toLowerCase().includes('career mate'));
   const isPMClassmate = currentUser?.role && (currentUser.role.toLowerCase().includes('classmate') || currentUser.role.toLowerCase().includes('class mate'));
 
-  const lockedProject = isPMCareermate ? 'Career Mate' : (isPMClassmate ? 'Classmate' : null);
+  let lockedProject = null;
+  if (isPMCareermate) {
+    lockedProject = 'Career Mate';
+  } else if (isPMClassmate) {
+    lockedProject = 'Classmate';
+  }
   const effectiveInitial = lockedProject || initialProject;
 
   const [activeNav, setActiveNav] = useState('flowchart');

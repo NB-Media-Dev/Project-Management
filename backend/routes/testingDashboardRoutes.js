@@ -1,7 +1,8 @@
 import express from 'express';
 import db from '../../db.js';
 import { upload } from '../config/upload.js';
-import { asyncHandler, formatSize, createNotification, checkDevopsStagingReady, queryWithFallback } from '../utils/helpers.js';
+import { asyncHandler, formatSize, createNotification, checkDevopsStagingReady, queryWithFallback, isClassmateOrCareerMate } from '../utils/helpers.js';
+import { handlePackageApproval } from '../services/dashboardController.js';
 
 const router = express.Router();
 
@@ -75,99 +76,55 @@ router.put('/api/packages/:id/approve-testing-tl', asyncHandler(async (req, res)
   res.json({ success: true });
 }));
 
-router.put('/api/packages/:id/approve-cto', asyncHandler(async (req, res) => {
-  const { id } = req.params;
-  const { approvedBy } = req.body || {};
-  const uploader = approvedBy || 'CTO';
-
-  const [pkgRows] = await db.query(
-    'SELECT p.testing_tl_approved, pr.name AS project_name FROM packages p LEFT JOIN projects pr ON p.project_id = pr.id WHERE p.id = ?',
-    [id]
-  );
-  if (pkgRows.length > 0) {
-    const pkg = pkgRows[0];
+router.put('/api/packages/:id/approve-cto', handlePackageApproval({
+  roleLabel: 'CTO',
+  dbQuery: `UPDATE packages SET cto_approved = TRUE, cto_approved_by = ?, final_pm_approved = TRUE, final_pm_approved_by = ?, final_admin_approved = TRUE, final_admin_approved_by = ? WHERE id = ?`,
+  getQueryParams: (id, uploader) => [uploader, uploader, uploader, id],
+  notificationMsg: (uploader) => `CTO (${uploader}) APPROVED task {package} for live production release! DevOps team please proceed with deployment!`,
+  recipients: ['Devops Team'],
+  validationFn: (pkg) => {
+    if (!pkg) return null;
     const isQaApproved = pkg.testing_tl_approved === 1 || pkg.testing_tl_approved === true;
     if (!isQaApproved) {
-      return res.status(400).json({ error: 'Cannot approve CTO release: Testing team has not approved the Test pass yet.' });
+      return 'Cannot approve CTO release: Testing team has not approved the Test pass yet.';
     }
-    const projName = (pkg.project_name || '').trim().toLowerCase();
-    const isClassmateOrCareerMate = projName === 'career mate' || projName === 'careermate' || projName === 'classmate' || projName === 'class mate';
-    
-    if (isClassmateOrCareerMate) {
-      return res.status(400).json({ error: 'CTO cannot approve Classmate or Career Mate projects. Final approval for Classmate and Career Mate must come from Project Manager.' });
+    if (isClassmateOrCareerMate(pkg.project_name)) {
+      return 'CTO cannot approve Classmate or Career Mate projects. Final approval for Classmate and Career Mate must come from Project Manager.';
     }
-  }
-
-  await db.query(
-    `UPDATE packages SET cto_approved = TRUE, cto_approved_by = ?, final_pm_approved = TRUE, final_pm_approved_by = ?, final_admin_approved = TRUE, final_admin_approved_by = ? WHERE id = ?`,
-    [uploader, uploader, uploader, id]
-  );
-  await createNotification(id, `CTO (${uploader}) APPROVED task {package} for live production release! DevOps team please proceed with deployment!`, ['Devops Team'], uploader, 'CTO');
-  res.json({ success: true });
+    return null;
+  },
 }));
 
-router.put('/api/packages/:id/approve-final-pm', asyncHandler(async (req, res) => {
-  const { id } = req.params;
-  const { approvedBy } = req.body || {};
-  const uploader = approvedBy || 'Project Manager';
-
-  const [pkgRows] = await db.query(
-    'SELECT p.cto_approved, p.testing_tl_approved, pr.name AS project_name FROM packages p LEFT JOIN projects pr ON p.project_id = pr.id WHERE p.id = ?',
-    [id]
-  );
-  if (pkgRows.length > 0) {
-    const pkg = pkgRows[0];
-    const isQaApproved = pkg.testing_tl_approved === 1 || pkg.testing_tl_approved === true;
-    if (!isQaApproved) {
-      return res.status(400).json({ error: 'Cannot give Final Production Approval: Testing team has not approved the Test pass yet.' });
-    }
-    const projName = (pkg.project_name || '').trim().toLowerCase();
-    const isClassmateOrCareerMate = projName === 'career mate' || projName === 'careermate' || projName === 'classmate' || projName === 'class mate';
-    const isCtoApproved = pkg.cto_approved === 1 || pkg.cto_approved === true;
-
-    if (!isClassmateOrCareerMate && !isCtoApproved) {
-      return res.status(400).json({ error: 'Final production approval for this project must be given by the CTO.' });
-    }
+const validateFinalApproval = (pkg) => {
+  if (!pkg) return null;
+  const isQaApproved = pkg.testing_tl_approved === 1 || pkg.testing_tl_approved === true;
+  if (!isQaApproved) {
+    return 'Cannot give Final Production Approval: Testing team has not approved the Test pass yet.';
   }
+  const isSpecialProject = isClassmateOrCareerMate(pkg.project_name);
+  const isCtoApproved = pkg.cto_approved === 1 || pkg.cto_approved === true;
+  if (!isSpecialProject && !isCtoApproved) {
+    return 'Final production approval for this project must be given by the CTO.';
+  }
+  return null;
+};
 
-  await db.query(
-    `UPDATE packages SET final_pm_approved = TRUE, final_pm_approved_by = ?, final_admin_approved = TRUE, final_admin_approved_by = ? WHERE id = ?`,
-    [uploader, uploader, id]
-  );
-  await createNotification(id, `Project Manager (${uploader}) gave FINAL PRODUCTION APPROVAL for task {package}. DevOps team please proceed with LIVE PRODUCTION DEPLOYMENT!`, ['Devops Team'], uploader, 'Project Manager');
-  res.json({ success: true });
+router.put('/api/packages/:id/approve-final-pm', handlePackageApproval({
+  roleLabel: 'Project Manager',
+  dbQuery: `UPDATE packages SET final_pm_approved = TRUE, final_pm_approved_by = ?, final_admin_approved = TRUE, final_admin_approved_by = ? WHERE id = ?`,
+  getQueryParams: (id, uploader) => [uploader, uploader, id],
+  notificationMsg: (uploader) => `Project Manager (${uploader}) gave FINAL PRODUCTION APPROVAL for task {package}. DevOps team please proceed with LIVE PRODUCTION DEPLOYMENT!`,
+  recipients: ['Devops Team'],
+  validationFn: validateFinalApproval,
 }));
 
-router.put('/api/packages/:id/approve-final-admin', asyncHandler(async (req, res) => {
-  const { id } = req.params;
-  const { approvedBy } = req.body || {};
-  const uploader = approvedBy || 'Admin';
-
-  const [pkgRows] = await db.query(
-    'SELECT p.cto_approved, p.testing_tl_approved, pr.name AS project_name FROM packages p LEFT JOIN projects pr ON p.project_id = pr.id WHERE p.id = ?',
-    [id]
-  );
-  if (pkgRows.length > 0) {
-    const pkg = pkgRows[0];
-    const isQaApproved = pkg.testing_tl_approved === 1 || pkg.testing_tl_approved === true;
-    if (!isQaApproved) {
-      return res.status(400).json({ error: 'Cannot give Final Production Approval: Testing team has not approved the Test pass yet.' });
-    }
-    const projName = (pkg.project_name || '').trim().toLowerCase();
-    const isClassmateOrCareerMate = projName === 'career mate' || projName === 'careermate' || projName === 'classmate' || projName === 'class mate';
-    const isCtoApproved = pkg.cto_approved === 1 || pkg.cto_approved === true;
-
-    if (!isClassmateOrCareerMate && !isCtoApproved) {
-      return res.status(400).json({ error: 'Final production approval for this project must be given by the CTO.' });
-    }
-  }
-
-  await db.query(
-    `UPDATE packages SET final_pm_approved = TRUE, final_pm_approved_by = ?, final_admin_approved = TRUE, final_admin_approved_by = ? WHERE id = ?`,
-    [uploader, uploader, id]
-  );
-  await createNotification(id, `Admin (${uploader}) gave FINAL PRODUCTION APPROVAL for task {package}. DevOps team please proceed with LIVE PRODUCTION DEPLOYMENT!`, ['Devops Team'], uploader, 'Admin');
-  res.json({ success: true });
+router.put('/api/packages/:id/approve-final-admin', handlePackageApproval({
+  roleLabel: 'Admin',
+  dbQuery: `UPDATE packages SET final_pm_approved = TRUE, final_pm_approved_by = ?, final_admin_approved = TRUE, final_admin_approved_by = ? WHERE id = ?`,
+  getQueryParams: (id, uploader) => [uploader, uploader, id],
+  notificationMsg: (uploader) => `Admin (${uploader}) gave FINAL PRODUCTION APPROVAL for task {package}. DevOps team please proceed with LIVE PRODUCTION DEPLOYMENT!`,
+  recipients: ['Devops Team'],
+  validationFn: validateFinalApproval,
 }));
 
 router.post('/api/packages/:id/bugs', upload.single('file'), asyncHandler(async (req, res) => {

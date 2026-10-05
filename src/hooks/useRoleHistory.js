@@ -18,7 +18,12 @@ export function useRoleHistory({ initialRole = 'All Roles', initialProject = 'Al
   const userRole = currentUser?.role || (initialRole !== 'All Roles' ? initialRole : null);
   const isPMCareermate = userRole && (userRole.toLowerCase().includes('careermate') || userRole.toLowerCase().includes('career mate'));
   const isPMClassmate = userRole && (userRole.toLowerCase().includes('classmate') || userRole.toLowerCase().includes('class mate'));
-  const pmProject = isPMCareermate ? 'Career Mate' : (isPMClassmate ? 'Classmate' : null);
+  let pmProject = null;
+  if (isPMCareermate) {
+    pmProject = 'Career Mate';
+  } else if (isPMClassmate) {
+    pmProject = 'Classmate';
+  }
 
   const isAdmin = currentUser?.role === 'Admin' || currentUser?.role === 'CTO' || Boolean(pmProject) || (!currentUser && (initialRole === 'Admin' || initialRole === 'CTO'));
   const effectiveRole = isAdmin ? (initialRole || 'All Roles') : (userRole || initialRole || 'All Roles');

@@ -19,6 +19,12 @@ export const getFullUrl = (url) => {
   return 'https://' + trimmed;
 };
 
+export const isClassmateOrCareerMate = (projectName) => {
+  if (!projectName) return false;
+  const clean = String(projectName).trim().toLowerCase();
+  return clean === 'career mate' || clean === 'careermate' || clean === 'classmate' || clean === 'class mate';
+};
+
 export const triggerFilePicker = (accept, onFile, multiple = false) => {
   const input = document.createElement('input');
   input.type = 'file';
@@ -133,10 +139,20 @@ export const getStatusBadgeClass = (status = '') => {
   if (status.includes('Completed') || status.includes('Live') || status.includes('Fixed')) {
     return 'completed';
   }
-  if (status.includes('Open') || status.includes('Priority')) {
+  if (status.includes('Bugs') || status.includes('Pending')) {
     return 'pending';
   }
   return 'in-progress';
+};
+
+export const validatePasswordComplexity = (password) => {
+  if (!password) return 'Please enter a password.';
+  if (password.length < 8) return 'Password must be at least 8 characters long.';
+  if (!/[A-Z]/.test(password)) return 'Password must contain at least 1 uppercase letter (A-Z).';
+  if (!/[a-z]/.test(password)) return 'Password must contain at least 1 lowercase letter (a-z).';
+  if (!/\d/.test(password)) return 'Password must contain at least 1 number (0-9).';
+  if (!/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(password)) return 'Password must contain at least 1 special symbol (!@#$%^&*).';
+  return null;
 };
 
 export const renderVideoThumbnail = () => (

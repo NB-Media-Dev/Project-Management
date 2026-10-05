@@ -35,9 +35,9 @@ function CreatePackageModal({ onSubmit, onCancel, defaultProject, currentUser })
 
         if (availableProjects.length > 0) {
           if (defaultProject && availableProjects.some(p => p.trim().toLowerCase() === defaultProject.trim().toLowerCase())) {
-            const matched = availableProjects.filter(p => p.trim().toLowerCase() === defaultProject.trim().toLowerCase());
+            const matched = availableProjects.find(p => p.trim().toLowerCase() === defaultProject.trim().toLowerCase());
             setProjects(availableProjects);
-            setProjectType(matched[0]);
+            setProjectType(matched);
           } else {
             setProjects(availableProjects);
             setProjectType(availableProjects[0]);

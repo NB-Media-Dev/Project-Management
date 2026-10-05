@@ -158,15 +158,6 @@ CREATE TABLE notification_reads (
 
 
 INSERT INTO users (username, password, role) VALUES
-('content', 'password', 'Content Team'),
-('content_member', 'password', 'Content Team'),
-('digital', 'password', 'Design Team'),
-('design_member', 'password', 'Design Team'),
-('developer', 'password', 'Developer Team'),
-('developer_member', 'password', 'Developer Team'),
-('devops', 'password', 'Devops Team'),
-('testing', 'password', 'Testing Team'),
-('cto', 'password', 'CTO'),
 ('admin', 'password', 'Admin');
 
 INSERT INTO projects (name) VALUES

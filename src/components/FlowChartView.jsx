@@ -173,7 +173,8 @@ function FlowChartHeaderControls({
           const isCompleted = isPackageCompleted(pkg);
 
           return (
-            <div
+            <button
+              type="button"
               key={`standalone-task-box-${pkg.id}`}
               onClick={() => {
                 if (pkg.project) {
@@ -186,8 +187,6 @@ function FlowChartHeaderControls({
                   ? 'border-purple-600 bg-purple-50/90 shadow-md ring-2 ring-purple-600/30 scale-[1.02]'
                   : 'border-slate-200 bg-white hover:border-purple-300 hover:shadow-xs'
               }`}
-              role="button"
-              tabIndex={0}
             >
               {/* HEADER BADGE: PROJECT NAME */}
               <div className="d-flex justify-between items-center mb-2">
@@ -203,20 +202,17 @@ function FlowChartHeaderControls({
               <div className="d-flex items-center gap-3 mt-1">
                 <div className={`p-2.5 rounded-xl flex-shrink-0 ${isCompleted ? 'bg-emerald-100 text-emerald-700' : 'bg-purple-100 text-purple-800'}`}>
                   {isCompleted ? (
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
-                      <polyline points="22 4 12 14.01 9 11.01" />
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" title="Completed Task">
+                      <circle cx="12" cy="12" r="10" fill="#10b981" />
+                      <path d="M8 12.5l2.8 2.8 5.2-5.3" stroke="#ffffff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
                     </svg>
                   ) : (
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                      <polygon points="12 2 2 7 12 12 22 7 12 2" />
-                      <polyline points="2 17 12 22 22 17" />
-                      <polyline points="2 12 17 22 12" />
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" title="Task In Progress">
+                      <circle cx="12" cy="12" r="9" stroke="#8b5cf6" strokeWidth="2.2" fill="none" />
                     </svg>
                   )}
                 </div>
-
-                <div className="overflow-hidden flex-1">
+                <div className="overflow-hidden min-w-0">
                   <div className="font-black text-base text-slate-900 truncate" title={pkg.name}>
                     {pkg.name}
                   </div>
@@ -225,7 +221,7 @@ function FlowChartHeaderControls({
                   </div>
                 </div>
               </div>
-            </div>
+            </button>
           );
         })}
       </div>
@@ -243,7 +239,7 @@ function FlowFileItem({ file, isApproved, defaultLabel, setViewedPdf }) {
       setViewedPdf(file);
       return;
     }
-    const baseUrl = typeof window !== 'undefined' && window.API_BASE_URL ? window.API_BASE_URL : 'http://localhost:3001';
+    const baseUrl = typeof window !== 'undefined' && window.API_BASE_URL ? window.API_BASE_URL : 'project-management-production-2612.up.railway.app';
     const targetFile = file.fileName || file.name || file.url;
     if (targetFile) {
       const fileUrl = targetFile.startsWith('http') ? targetFile : `${baseUrl}/uploads/${targetFile}`;
@@ -252,37 +248,37 @@ function FlowFileItem({ file, isApproved, defaultLabel, setViewedPdf }) {
   };
 
   return (
-    <div
-      onClick={handleFileClick}
-      className="d-flex items-center gap-2 p-2.5 rounded-lg bg-white border mb-2 shadow-2xs text-left cursor-pointer hover:border-emerald-400 transition-all"
-      title={`Click to view ${fileName}`}
-      role="button"
-      tabIndex={0}
-    >
+    <div className="d-flex items-start gap-2.5 p-2.5 rounded-lg bg-white border mb-2 shadow-2xs w-full text-left">
       {isApproved ? (
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" className="flex-shrink-0" title="Approved">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" className="flex-shrink-0 mt-0.5" title="Approved">
           <circle cx="12" cy="12" r="10" fill="#10b981" />
           <path d="M8 12.5l2.8 2.8 5.2-5.3" stroke="#ffffff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
         </svg>
       ) : (
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" className="flex-shrink-0" title="Uploaded (Pending Approval)">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" className="flex-shrink-0 mt-0.5" title="Uploaded (Pending Approval)">
           <circle cx="12" cy="12" r="9" stroke="#10b981" strokeWidth="2.2" fill="none" />
         </svg>
       )}
 
-      <div className="overflow-hidden flex-1">
-        <span
-          className="text-sm font-extrabold truncate block hover:underline"
-          style={{ color: isApproved ? '#10b981' : '#1e293b' }}
-        >
-          {fileName}
-        </span>
+      <div className="overflow-hidden flex-1 min-w-0">
+        <div>
+          <button
+            type="button"
+            onClick={handleFileClick}
+            className="text-sm font-extrabold truncate inline-block text-left bg-transparent border-0 p-0 cursor-pointer text-indigo-600 hover:underline hover:text-indigo-800"
+            style={{ color: '#2563eb', textDecoration: 'underline', padding: 0, border: 0, background: 'transparent' }}
+            title={`Click file text to view ${fileName}`}
+          >
+            {fileName}
+
+          </button>
+        </div>
         {senderName && (
-          <div className="text-xs font-semibold text-purple-700 truncate mt-0.5" title={`Sender: ${senderName}`}>
-            Sender: {senderName}
+          <div className="text-xs font-medium text-slate-500 truncate mt-0.5" title={`Sender: ${senderName}`}>
+            Sender: <span className="font-semibold text-purple-700">{senderName}</span>
           </div>
         )}
-        <div className="text-xs text-muted d-flex items-center justify-between gap-2 mt-0.5">
+        <div className="text-xs text-muted d-flex items-center justify-between gap-2 mt-1">
           <span>{file.fileSize || defaultLabel}</span>
           <span className={`status-badge text-xs py-0.5 px-2 ${isApproved ? 'approved' : 'pending'}`}>
             {isApproved ? 'Approved' : 'Uploaded'}
@@ -292,6 +288,7 @@ function FlowFileItem({ file, isApproved, defaultLabel, setViewedPdf }) {
     </div>
   );
 }
+
 
 function FlowChartTeamColumns({ stages, activePackage, setViewedPdf }) {
   // Digital files separation
@@ -684,7 +681,7 @@ function FlowChartView({
   const [projects, setProjects] = useState([]);
   const [selectedProject, setSelectedProject] = useState(initialProject || 'All Projects');
   const [selectedPackageId, setSelectedPackageId] = useState(null);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery] = useState('');
   const [viewedPdf, setViewedPdf] = useState(null);
   const hasSelectedRef = useRef(false);
 
@@ -774,9 +771,7 @@ function FlowChartView({
   const activePackage = filteredPackages.find((p) => p.id === selectedPackageId) || filteredPackages[0] || pmFilteredPackages[0] || null;
   const stages = getStageDetails(activePackage);
 
-  const totalPkgs = filteredPackages.length;
-  const completedPkgs = filteredPackages.filter(isPackageCompleted).length;
-  const overallFlowPercent = totalPkgs > 0 ? Math.round((completedPkgs / totalPkgs) * 100) : 0;
+
 
   return (
     <div className="flow-chart-dashboard">

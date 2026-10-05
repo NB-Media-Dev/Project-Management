@@ -1,16 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { api } from '../services/api';
-import { getAvatarUrl } from '../utils/fileUtils';
-
-export function validatePasswordComplexity(password) {
-  if (!password) return 'Please enter a password.';
-  if (password.length < 8) return 'Password must be at least 8 characters long.';
-  if (!/[A-Z]/.test(password)) return 'Password must contain at least 1 uppercase letter (A-Z).';
-  if (!/[a-z]/.test(password)) return 'Password must contain at least 1 lowercase letter (a-z).';
-  if (!/[0-9]/.test(password)) return 'Password must contain at least 1 number (0-9).';
-  if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) return 'Password must contain at least 1 special symbol (!@#$%^&*).';
-  return null;
-}
+import { getAvatarUrl, validatePasswordComplexity } from '../utils/fileUtils';
 
 function validatePasswordChange(currentPassword, newPassword, confirmPassword) {
   if (!currentPassword.trim()) {
@@ -219,7 +209,6 @@ function ChangePasswordTab({
 function ProfileModal({ currentUser, onClose, onUpdateUser }) {
   const username = currentUser?.username || '';
   const currentRole = currentUser?.role || '';
-  const isTeamLeader = currentUser?.isTeamLeader || false;
   const currentAvatar = currentUser?.avatarUrl || null;
 
   const [activeTab, setActiveTab] = useState('profile'); 

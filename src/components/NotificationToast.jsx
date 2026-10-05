@@ -24,11 +24,10 @@ function ToastItem({ toast, onClose, onClickToast }) {
   };
 
   return (
-    <div
-      className="human-toast-card"
+    <button
+      type="button"
+      className="human-toast-card text-left w-full"
       onClick={handleClick}
-      role="button"
-      tabIndex={0}
     >
       <div className="human-toast-header">
         <div className="human-toast-meta">
@@ -64,7 +63,7 @@ function ToastItem({ toast, onClose, onClickToast }) {
           </svg>
         </span>
       </div>
-    </div>
+    </button>
   );
 }
 

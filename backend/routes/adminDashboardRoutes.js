@@ -29,8 +29,18 @@ router.post('/api/users', asyncHandler(async (req, res) => {
 
 router.put('/api/users/:username', asyncHandler(async (req, res) => {
   const { username } = req.params;
-  const { password, role } = req.body;
+  const { password, role, requestor } = req.body;
   const cleanTarget = username.trim().toLowerCase();
+  const cleanRequestor = requestor ? requestor.trim().toLowerCase() : null;
+
+  if (role) {
+    const [rows] = await db.query('SELECT role FROM users WHERE LOWER(username) = ?', [cleanTarget]);
+    if (rows.length > 0 && rows[0].role !== role) {
+      if (cleanRequestor && cleanRequestor === cleanTarget) {
+        return res.status(400).json({ error: 'You cannot change your own role.' });
+      }
+    }
+  }
 
   if (password && password.trim() !== '') {
     const cleanPassword = password.trim();

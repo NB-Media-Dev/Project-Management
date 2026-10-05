@@ -1,6 +1,6 @@
 const getBaseUrl = () => {
   if (typeof window !== 'undefined') {
-    // Empty string means Vite dev proxy or same-origin production deployment
+  
     return window.API_BASE_URL || '';
   }
   return 'http://localhost:3001';

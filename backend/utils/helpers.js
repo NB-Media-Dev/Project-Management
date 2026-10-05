@@ -136,7 +136,7 @@ export function checkPasswordComplexity(password) {
   if (password.length < 8) return 'Password must be at least 8 characters long.';
   if (!/[A-Z]/.test(password)) return 'Password must contain at least 1 uppercase letter.';
   if (!/[a-z]/.test(password)) return 'Password must contain at least 1 lowercase letter.';
-  if (!/[0-9]/.test(password)) return 'Password must contain at least 1 number.';
+  if (!/\d/.test(password)) return 'Password must contain at least 1 number.';
   if (!/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(password)) return 'Password must contain at least 1 special symbol.';
   return null;
 }
@@ -173,7 +173,8 @@ export async function createNotification(packageId, message, targetRoles, sender
     const packageName = rows.length > 0 ? rows[0].name : 'Unknown';
     const formattedMessage = message.replace('{package}', packageName);
 
-    for (const role of targetRoles) {
+    const uniqueRoles = Array.from(new Set(targetRoles || []));
+    for (const role of uniqueRoles) {
       try {
         await db.query(
           'INSERT INTO notifications (package_id, message, target_role, sender_username, sender_role) VALUES (?, ?, ?, ?, ?)',
@@ -190,6 +191,7 @@ export async function createNotification(packageId, message, targetRoles, sender
     console.error('Failed to create notification:', err.message);
   }
 }
+
 
 export async function checkDevopsStagingReady(packageId, actionPrefix) {
   const [pkgRows] = await db.query('SELECT submitted_to_devops, devops_staging_uploaded, staging_url, demo_url FROM packages WHERE id = ?', [packageId]);
@@ -251,4 +253,10 @@ export async function notifyIncompleteTeams(packageId, dueDateStr) {
   } catch (err) {
     console.error('Failed to notify incomplete teams:', err.message);
   }
+}
+
+export function isClassmateOrCareerMate(projectName) {
+  if (!projectName) return false;
+  const clean = projectName.trim().toLowerCase();
+  return clean === 'career mate' || clean === 'careermate' || clean === 'classmate' || clean === 'class mate';
 }

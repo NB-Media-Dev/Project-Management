@@ -1,6 +1,6 @@
 import express from 'express';
 import db from '../../db.js';
-import { asyncHandler } from '../utils/helpers.js';
+import { asyncHandler, isClassmateOrCareerMate } from '../utils/helpers.js';
 
 const router = express.Router();
 
@@ -16,14 +16,13 @@ router.post('/api/projects', asyncHandler(async (req, res) => {
 
 router.delete('/api/projects/:name', asyncHandler(async (req, res) => {
   const name = req.params.name.trim();
-  const lowerName = name.toLowerCase();
 
   // Prevent deletion of fixed system projects: Career Mate & Classmate
-  const fixedProjects = ['career mate', 'careermate', 'classmate', 'class mate'];
-  if (fixedProjects.includes(lowerName)) {
+  if (isClassmateOrCareerMate(name)) {
     return res.status(400).json({ error: `Project "${name}" is a fixed core project and cannot be deleted.` });
   }
 
+  const lowerName = name.toLowerCase();
   const [projRows] = await db.query('SELECT id FROM projects WHERE LOWER(name) = LOWER(?)', [lowerName]);
   if (projRows.length > 0) {
     const projectId = projRows[0].id;

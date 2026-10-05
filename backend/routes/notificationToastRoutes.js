@@ -13,7 +13,7 @@ router.get('/api/notifications', asyncHandler(async (req, res) => {
   const pmProject = getPMProjectForRole(inferredRole) || getPMProjectForRole(role);
 
   let query = `
-    SELECT n.id, n.package_id AS packageId, pr.name AS projectName, n.message,
+    SELECT DISTINCT n.id, n.package_id AS packageId, pr.name AS projectName, n.message,
            IF(nr.username IS NOT NULL, TRUE, FALSE) AS isRead, n.created_at AS createdAt,
            n.sender_username AS senderUsername, n.sender_role AS senderRole
     FROM notifications n
@@ -61,14 +61,20 @@ router.get('/api/notifications', asyncHandler(async (req, res) => {
     console.error('Notification query failed:', err.message);
   }
 
-  // Safety filter: strip out only notifications created by current user
-  const validRows = rows.filter((n) => {
+  // Safety filter: strip out only notifications created by current user and deduplicate by ID
+  const seenIds = new Set();
+  const validRows = [];
+  for (const n of rows) {
     const sUser = (n.senderUsername || '').trim().toLowerCase();
-    if (sUser && sUser === userNameLower) return false;
-    return true;
-  });
+    if (sUser && sUser === userNameLower) continue;
+    if (!seenIds.has(n.id)) {
+      seenIds.add(n.id);
+      validRows.push(n);
+    }
+  }
 
   res.json(validRows);
+
 }));
 
 router.put('/api/notifications/read', asyncHandler(async (req, res) => {

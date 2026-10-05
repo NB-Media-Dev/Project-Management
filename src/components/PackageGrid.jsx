@@ -29,18 +29,11 @@ function PackageGrid({
       {filteredPackages.map((pkg) => {
         const { label, badgeClass, linkText, linkColor } = renderStatus(pkg);
         return (
-          <div
+          <button
             key={pkg.id}
-            role="button"
-            tabIndex={0}
+            type="button"
             aria-label={`Open Task ${pkg.name}`}
             onClick={() => onSelect(pkg.id)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                onSelect(pkg.id);
-              }
-            }}
             className="package-card ui-card ui-card-interactive d-flex flex-col justify-between cursor-pointer w-full text-left"
           >
             <div>
@@ -119,7 +112,8 @@ function PackageGrid({
                 )}
               </div>
             </div>
-          </div>
+          </button>
+
         );
       })}
     </div>

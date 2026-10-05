@@ -26,6 +26,12 @@ function renderContentStatus(pkg) {
   };
 }
 
+function getContentApprovalBadgeClass(status) {
+  if (status === 'Approved') return 'build-file-approval-approved';
+  if (status === 'Rejected') return 'build-file-approval-rejected';
+  return 'build-file-approval-pending';
+}
+
 function ContentDashboard({ currentUser, onLogout, onUpdateUser }) {
   const packagesState = usePackages('All Projects');
   const {
@@ -279,7 +285,7 @@ function ContentDashboard({ currentUser, onLogout, onUpdateUser }) {
                     <h3 className="req-title">{req.name}</h3>
                     {req.fileName && (
                       <div className="d-flex gap-1 mt-1 flex-wrap">
-                        <span className={`build-file-approval-badge ${req.tlApproval === 'Approved' ? 'build-file-approval-approved' : (req.tlApproval === 'Rejected' ? 'build-file-approval-rejected' : 'build-file-approval-pending')}`} style={req.tlApproval === 'Rejected' ? { backgroundColor: '#fef2f2', color: '#dc2626', borderColor: '#fca5a5' } : {}}>
+                        <span className={`build-file-approval-badge ${getContentApprovalBadgeClass(req.tlApproval)}`} style={req.tlApproval === 'Rejected' ? { backgroundColor: '#fef2f2', color: '#dc2626', borderColor: '#fca5a5' } : {}}>
                           PM Approval: {req.tlApproval}
                         </span>
                       </div>
@@ -349,7 +355,7 @@ function ContentDashboard({ currentUser, onLogout, onUpdateUser }) {
                           </button>
                           {req.fileName && (
                             <a
-                              href={`${typeof window !== 'undefined' && window.API_BASE_URL ? window.API_BASE_URL : 'http://localhost:3001'}/uploads/${req.fileName}`}
+                              href={`${typeof window !== 'undefined' && window.API_BASE_URL ? window.API_BASE_URL : 'project-management-production-2612.up.railway.app'}/uploads/${req.fileName}`}
                               download={stripTimestampPrefix(req.fileName) || req.name}
                               target="_blank"
                               rel="noreferrer"

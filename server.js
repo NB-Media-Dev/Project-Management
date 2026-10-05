@@ -27,6 +27,15 @@ const port = process.env.PORT || 3001;
 app.use(validateContentLength);
 
 const corsOriginEnv = process.env.CORS_ORIGIN;
+function stripTrailingSlash(str) {
+  if (!str) return str;
+  let s = str.trim();
+  while (s.endsWith('/')) {
+    s = s.slice(0, -1);
+  }
+  return s;
+}
+
 app.use(cors({
   origin: (origin, callback) => {
     if (!origin) return callback(null, true);
@@ -35,14 +44,14 @@ app.use(cors({
       return callback(null, true);
     }
 
-    const allowedOrigins = corsOriginEnv.split(',').map(o => o.trim().replace(/\/+$/, ''));
-    const normalizedOrigin = origin.replace(/\/+$/, '');
+    const allowedOrigins = new Set(corsOriginEnv.split(',').map(o => stripTrailingSlash(o)));
+    const normalizedOrigin = stripTrailingSlash(origin);
 
-    if (allowedOrigins.includes(normalizedOrigin) || allowedOrigins.includes('*')) {
+    if (allowedOrigins.has(normalizedOrigin) || allowedOrigins.has('*')) {
       return callback(null, true);
     }
 
-    if (/^https?:\/\/(localhost|127\.0\.0\.1|192\.168\.\d+\.\d+|10\.\d+\.\d+\.\d+|172\.(1[6-9]|2\d|3[0-1])\.\d+\.\d+)(:\d+)?$/.test(normalizedOrigin)) {
+    if (/^https?:\/\/(?:localhost|127\.0\.0\.1|(?:10|192\.168|172\.(?:1[6-9]|2\d|3[01]))\.\d+\.\d+)(?::\d+)?$/.test(normalizedOrigin)) {
       return callback(null, true);
     }
 

@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React from 'react';
 import ReactDOM from 'react-dom';
-import { api } from '../services/api';
 import { formatTime, getAvatarUrl } from '../utils/fileUtils';
 import NotificationToast from './NotificationToast';
+import { useNotifications } from '../hooks/useNotifications';
 
 const NAV_ITEMS = [
   { id: 'flowchart', label: 'Dashboard' },
@@ -21,179 +21,40 @@ function PageNavigator({
 }) {
   const {
     setSelectedProject,
-    searchQuery,
     selectedPackageId,
     setSelectedPackageId,
-    filteredPackages,
     activeNav,
     setActiveNav,
-  } = packagesState;
+    filteredPackages = [],
+  } = packagesState || {};
 
-  const [notifications, setNotifications] = useState([]);
-  const [showNotifications, setShowNotifications] = useState(false);
-  const [toasts, setToasts] = useState([]);
-  const seenNotifIdsRef = useRef(new Set());
-  const isFirstLoadRef = useRef(true);
-  const notifRef = useRef(null);
-  const bellRef = useRef(null);
-  const [panelPos, setPanelPos] = useState({ top: 0, right: 0 });
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 5;
-  const totalPages = Math.ceil(notifications.length / itemsPerPage) || 1;
-
-  useEffect(() => {
-    if (currentPage > totalPages) {
-      setCurrentPage(totalPages);
-    }
-  }, [notifications.length, totalPages, currentPage]);
-
-  const pagedNotifications = notifications.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
+  const {
+    notifications,
+    pagedNotifications,
+    unreadCount,
+    isOpen: showNotifications,
+    setIsOpen: setShowNotifications,
+    toasts,
+    bellRef,
+    dropdownRef: notifRef,
+    panelPos,
+    setPanelPos,
+    currentPage,
+    setCurrentPage,
+    totalPages,
+    handleCloseToast,
+    handleNotificationClick,
+    handleMarkAllRead,
+  } = useNotifications(currentUser, onNavigatePackage);
 
   const username = currentUser?.username || '';
   const currentRole = currentUser?.role || '';
-  const isAdmin = currentRole === 'Admin';
-
-  // Request browser notification permission on mount if available
-  useEffect(() => {
-    if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'default') {
-      Notification.requestPermission().catch(() => {});
-    }
-  }, []);
-
-  // Reset tracking when user or role changes
-  useEffect(() => {
-    seenNotifIdsRef.current = new Set();
-    setToasts([]);
-  }, [username, currentRole]);
-
-  const fetchNotifications = useCallback(async () => {
-    if (!currentRole || !username) return;
-    try {
-      const data = await api.notifications.get(currentRole, username);
-      const isSelfNotification = (n) => {
-        const rLower = (currentRole || '').trim().toLowerCase();
-        const uLower = (username || '').trim().toLowerCase();
-
-        let roleKeyword = '';
-        if (rLower.includes('content')) roleKeyword = 'content';
-        else if (rLower.includes('design') || rLower.includes('digital')) roleKeyword = 'design';
-        else if (rLower.includes('devops')) roleKeyword = 'devops';
-        else if (rLower.includes('dev')) roleKeyword = 'dev';
-        else if (rLower.includes('test') || rLower.includes('qa')) roleKeyword = 'test';
-        else if (rLower.includes('admin')) roleKeyword = 'admin';
-
-        const sUser = (n.senderUsername || '').trim().toLowerCase();
-        const sRole = (n.senderRole || '').trim().toLowerCase();
-        const msg = (n.message || '').trim().toLowerCase();
-
-        if (sUser && (sUser === uLower || sUser === rLower)) return true;
-        if (sRole && sRole === rLower) return true;
-        if (roleKeyword && sRole && sRole.includes(roleKeyword)) return true;
-        if (roleKeyword && sUser && sUser.includes(roleKeyword)) return true;
-
-        if (roleKeyword) {
-          if (roleKeyword === 'content' && (msg.includes('content team') || msg.includes('content tl'))) return true;
-          if (roleKeyword === 'design' && (msg.includes('design team') || msg.includes('design tl'))) return true;
-          if (roleKeyword === 'dev' && (msg.includes('developer team') || msg.includes('dev tl') || msg.includes('developer team leader'))) return true;
-          if (roleKeyword === 'devops' && (msg.includes('devops team') || msg.includes('devops tl') || msg.includes('devops team leader'))) return true;
-          if (roleKeyword === 'test' && (msg.includes('testing team') || msg.includes('qa pass'))) return true;
-          if (roleKeyword === 'admin' && (msg.includes('admin approved') || msg.includes('admin gave final approval'))) return true;
-        }
-
-        if (uLower && uLower.length > 2 && msg.includes(uLower)) return true;
-
-        return false;
-      };
-
-      const validNotifs = data.filter((n) => !isSelfNotification(n));
-      setNotifications(validNotifs);
-
-      const unreadItems = validNotifs.filter(
-        (n) => !n.isRead && !seenNotifIdsRef.current.has(n.id)
-      );
-
-      if (unreadItems.length > 0) {
-        unreadItems.forEach((n) => seenNotifIdsRef.current.add(n.id));
-        setToasts((prev) => [...unreadItems, ...prev]);
-
-        // Trigger native desktop notification if permitted
-        if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
-          unreadItems.slice(0, 3).forEach((item) => {
-            try {
-              new Notification('New Notification', {
-                body: item.message,
-              });
-            } catch {}
-          });
-        }
-      }
-    } catch {
-      
-    }
-  }, [currentRole, username]);
-
-  const handleCloseToast = useCallback((toastId) => {
-    setToasts((prev) => prev.filter((t) => t.id !== toastId));
-  }, []);
-
-  useEffect(() => {
-    fetchNotifications();
-    const interval = setInterval(fetchNotifications, 5000);
-    const handleStorageChange = (e) => {
-      if (e.key === 'pm_packages_v4') fetchNotifications();
-    };
-    window.addEventListener('storage', handleStorageChange);
-    const handleClickOutside = (e) => {
-      if (
-        notifRef.current && !notifRef.current.contains(e.target) &&
-        bellRef.current && !bellRef.current.contains(e.target)
-      ) {
-        setShowNotifications(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      clearInterval(interval);
-      window.removeEventListener('storage', handleStorageChange);
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [fetchNotifications]);
-
-  const unreadCount = notifications.filter((n) => !n.isRead).length;
 
   const handleNavClick = (navId) => {
     setActiveNav(navId);
     setSelectedPackageId(null);
     if (navId === 'projects') {
       setSelectedProject(null);
-    }
-  };
-
-  const handleNotificationClick = async (item) => {
-    try {
-      if (!item.isRead) {
-        await api.notifications.markRead(item.id, username);
-        fetchNotifications();
-      }
-      setShowNotifications(false);
-      if (onNavigatePackage && item.projectName && item.packageId) {
-        onNavigatePackage(item.projectName, item.packageId);
-      }
-    } catch {
-      
-    }
-  };
-
-  const handleMarkAllRead = async () => {
-    if (!currentRole || !username) return;
-    try {
-      await api.notifications.markAllRead(currentRole, username);
-      fetchNotifications();
-    } catch {
-      
     }
   };
 

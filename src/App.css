@@ -325,7 +325,7 @@ code, pre, .font-mono, .code-snippet, .commit-hash, .tech-tag {
 .notify-btn:hover,
 .page-nav-notif-btn.open {
   background-color: #ffffff;
-  color: #d97706;
+  color: #b45309;
   transform: scale(1.05);
 }
 
@@ -635,7 +635,7 @@ code, pre, .font-mono, .code-snippet, .commit-hash, .tech-tag {
   opacity: 0.4;
   cursor: not-allowed;
   border-color: #e2e8f0;
-  color: #94a3b8;
+  color: #475569;
   background: #f8fafc;
 }
 
@@ -655,7 +655,7 @@ code, pre, .font-mono, .code-snippet, .commit-hash, .tech-tag {
   border-radius: 9999px;
   font-size: 0.85rem;
   font-weight: 700;
-  color: #ef4444;
+  color: #b91c1c;
   background: #fef2f2;
   border: 1px solid #fca5a5;
   cursor: pointer;
@@ -664,7 +664,7 @@ code, pre, .font-mono, .code-snippet, .commit-hash, .tech-tag {
 
 .btn-danger-outline:hover {
   background: #fee2e2;
-  color: #dc2626;
+  color: #b91c1c;
   border-color: #f87171;
 }
 
@@ -683,7 +683,7 @@ code, pre, .font-mono, .code-snippet, .commit-hash, .tech-tag {
 
 .delete-icon-btn:hover {
   background-color: #fee2e2;
-  color: #ef4444;
+  color: #b91c1c;
 }
 
 
@@ -1181,7 +1181,7 @@ select:focus,
 }
 
 .btn-purple-pill {
-  background: linear-gradient(135deg, #f59e0b 0%, #b45309 100%);
+  background: linear-gradient(135deg, #b45309 0%, #78350f 100%);
   color: #ffffff;
   border: none;
   padding: 9px 22px;
@@ -1318,7 +1318,7 @@ select:focus,
 
 .stat-icon-box.total { background-color: #fef3c7; color: #854d0e; }
 .stat-icon-box.progress { background-color: #fef08a; color: #713f12; }
-.stat-icon-box.awaiting { background-color: #fde68a; color: #a16207; }
+.stat-icon-box.awaiting { background-color: #fde68a; color: #713f12; }
 .stat-icon-box.completed { background-color: #ecfdf5; color: #166534; }
 
 .stat-number {
@@ -1526,7 +1526,7 @@ select:focus,
 }
 
 .ui-btn-purple {
-  background: linear-gradient(135deg, #f59e0b 0%, #b45309 100%);
+  background: linear-gradient(135deg, #b45309 0%, #78350f 100%);
   color: #ffffff;
   border: none;
   padding: 8px 18px;
@@ -2724,26 +2724,7 @@ select {
   color: var(--color-primary);
 }
 
-.btn-danger-outline {
-  background-color: #fff1f2;
-  border: 1px solid #fecdd3;
-  color: #be123c;
-  padding: 8px 18px;
-  border-radius: var(--radius-pill);
-  font-family: var(--font-sans);
-  font-size: 0.82rem;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
 
-.btn-danger-outline:hover {
-  background-color: #e11d48;
-  color: #ffffff;
-  border-color: #e11d48;
-  box-shadow: 0 4px 12px rgba(225, 29, 72, 0.25);
-  transform: translateY(-1px);
-}
 
 @media (max-width: 900px) {
   .app-shell,
@@ -2781,7 +2762,6 @@ select {
   }
 }
 
-/* Digital Dashboard Upload Containers & Options Styling */
 .digital-dashboard-wrapper {
   display: flex;
   flex-direction: column;
@@ -3091,7 +3071,6 @@ select {
   justify-content: center;
 }
 
-/* LIVE TRACKER FLOWCHART PIPELINE STYLING */
 .live-tracker-pulse-badge {
   display: inline-flex;
   align-items: center;
@@ -3255,11 +3234,6 @@ select {
   color: #9333ea;
 }
 
-/* ==========================================================================
-   RESPONSIVE DESIGN & MOBILE/TABLET/DESKTOP BREAKPOINTS
-   ========================================================================== */
-
-/* TABLET BREAKPOINT (max-width: 1024px) */
 @media (max-width: 1024px) {
   .app-shell,
   .playful-shell {
@@ -3655,12 +3629,8 @@ select {
   border-color: #ef4444;
 }
 
-/* ==========================================================================
-   MOBILE UI FIXES & BREAKPOINTS (max-width: 768px)
-   ========================================================================== */
 
 @media (max-width: 768px) {
-  /* Prevent browser auto-zoom on mobile form inputs */
   input, select, textarea {
     font-size: 16px !important;
   }
@@ -3674,7 +3644,6 @@ select {
     padding: 8px 4px !important;
   }
 
-  /* Page Navigator Mobile Layout */
   .page-navigator {
     border-radius: 12px !important;
     margin-bottom: 14px !important;
@@ -3732,7 +3701,6 @@ select {
     left: auto !important;
   }
 
-  /* Flowchart View Mobile Grid & Box Layout */
   .flowchart-diagram-canvas {
     padding: 1rem 0.6rem !important;
     gap: 1rem !important;
@@ -3769,8 +3737,6 @@ select {
     width: 100% !important;
     height: 32px !important;
   }
-
-  /* Dashboard Cards and Grids Mobile Layout */
   .grid-2col,
   .grid-3col,
   .grid-4col,
@@ -3785,8 +3751,6 @@ select {
     grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)) !important;
     gap: 8px !important;
   }
-
-  /* Modal Mobile Responsiveness */
   .modal-overlay {
     padding: 8px !important;
   }
@@ -3831,10 +3795,6 @@ select {
   }
 }
 
-/* ==========================================================================
-   RESPONSIVE NOTIFICATION ICON & TOP RIGHT MOBILE NAVBAR UI
-   ========================================================================== */
-
 .navbar-end-notif,
 .user-section .dropdown-wrap,
 .page-nav-user-row .page-nav-notif-wrap {
@@ -3846,49 +3806,6 @@ select {
   order: 99;
 }
 
-.user-section,
-.page-nav-user-row {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 10px;
-  flex-shrink: 0;
-}
-
-.notify-btn,
-.page-nav-notif-btn {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background-color: #ffffff;
-  border: 1px solid #cbd5e1;
-  color: #334155;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  position: relative;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  transition: all 0.2s ease;
-  flex-shrink: 0;
-}
-
-.notify-btn:hover,
-.page-nav-notif-btn:hover,
-.page-nav-notif-btn.open {
-  background-color: #fef3c7;
-  color: #d97706;
-  border-color: #fde047;
-  transform: scale(1.05);
-}
-
-.notification-dropdown,
-.page-nav-notif-panel {
-  max-width: calc(100vw - 24px) !important;
-  width: 340px !important;
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.18) !important;
-  z-index: 99999 !important;
-}
 
 @media (max-width: 768px) {
   .page-nav-top {

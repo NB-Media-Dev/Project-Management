@@ -112,12 +112,22 @@ function getDevopsBuildFilesList(selectedPackage) {
   return [];
 }
 
+function getDevopsStatusBadgeInfo(selectedPackage, hasProductionLink) {
+  if (selectedPackage?.deployed || hasProductionLink) {
+    return { badgeClass: 'completed', label: 'Live Production Deployed' };
+  }
+  if (selectedPackage?.finalAdminApproved) {
+    return { badgeClass: 'in-progress', label: 'Approved for Production' };
+  }
+  return { badgeClass: 'pending', label: 'Staging Phase' };
+}
+
 function DevopsPackageDetailsView({
   selectedPackage,
   selectedProject,
   setSelectedPackageId,
   currentUser,
-  handleProductionDeploy,
+  _handleProductionDeploy,
   devBuildFilesList,
   setViewedPdf,
   hasDevZip,
@@ -129,17 +139,8 @@ function DevopsPackageDetailsView({
   inputDesc,
   setInputDesc,
 }) {
-  let badgeClass = 'pending';
-  let label = 'Staging Phase';
   const hasProductionLink = Boolean(selectedPackage?.demoUrl && selectedPackage.demoUrl.trim() !== '');
-
-  if (selectedPackage.deployed || hasProductionLink) {
-    badgeClass = 'completed';
-    label = 'Live Production Deployed';
-  } else if (selectedPackage.finalAdminApproved) {
-    badgeClass = 'in-progress';
-    label = 'Approved for Production';
-  }
+  const { badgeClass, label } = getDevopsStatusBadgeInfo(selectedPackage, hasProductionLink);
 
   const appBuilds = devBuildFilesList.filter((b) => b.platform === 'App' || b.platform === 'Mobile');
   const webBuilds = devBuildFilesList.filter((b) => b.platform !== 'App' && b.platform !== 'Mobile');

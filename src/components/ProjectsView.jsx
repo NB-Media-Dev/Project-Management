@@ -97,11 +97,11 @@ function ProjectsView({
     }
   };
 
-  const FIXED_PROJECTS = ['career mate', 'careermate', 'classmate', 'class mate'];
+  const FIXED_PROJECTS = new Set(['career mate', 'careermate', 'classmate', 'class mate']);
   const isFixedProject = (name) => {
     if (!name) return false;
     const clean = name.trim().toLowerCase();
-    return FIXED_PROJECTS.includes(clean);
+    return FIXED_PROJECTS.has(clean);
   };
 
   const handleDeleteProject = async (projectName, e) => {

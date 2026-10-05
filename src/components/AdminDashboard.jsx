@@ -5,10 +5,11 @@ import FlowChartView from './FlowChartView';
 import { usePackages } from '../hooks/usePackages';
 import { api } from '../services/api';
 import ProjectsView from './ProjectsView';
-import { getAvatarUrl } from '../utils/fileUtils';
+import { getAvatarUrl, validatePasswordComplexity, isClassmateOrCareerMate } from '../utils/fileUtils';
 
-import { validatePasswordComplexity } from './ProfileModal';
 import RejectionModal from './RejectionModal';
+import PasswordField from './PasswordField';
+import AdminModal from './AdminModal';
 
 const AVATAR_COLORS = ['#2563eb', '#7c3aed', '#059669', '#d97706', '#dc2626', '#0284c7'];
 
@@ -43,34 +44,22 @@ function UserModal({
   setFormPassword,
   formRole,
   setFormRole,
-  formIsTeamLeader,
+  _formIsTeamLeader,
   setFormIsTeamLeader,
   formError,
   handleFormSubmit,
+  currentUser,
 }) {
-  const [showAdminPassword, setShowAdminPassword] = useState(false);
-  if (!isModalOpen) return null;
+  const isSelf = isEditing && currentUser && formUsername.trim().toLowerCase() === (currentUser.username || '').trim().toLowerCase();
 
   return (
-    <dialog
-      open
-      className="modal-overlay"
-      aria-modal="true"
+    <AdminModal
+      isOpen={isModalOpen}
+      onClose={() => setIsModalOpen(false)}
+      title={isEditing ? (isSelf ? 'Edit Your Account' : 'Edit User Account') : 'Add New User'}
+      error={formError}
     >
-      <button
-        type="button"
-        className="modal-backdrop-btn"
-        onClick={() => setIsModalOpen(false)}
-        aria-label="Close modal backdrop"
-      />
-      <div className="modal-content modal-content-sm">
-        <h2 className="modal-title">{isEditing ? 'Edit User Account' : 'Add New User'}</h2>
-        {formError && (
-          <div className="alert-banner danger mb-4" style={{ justifyContent: 'center', textAlign: 'center' }}>
-            {formError}
-          </div>
-        )}
-        <form onSubmit={handleFormSubmit}>
+      <form onSubmit={handleFormSubmit}>
           <div className="form-group mb-4">
             <label htmlFor="formUsername" className="ui-label">Username</label>
             <input
@@ -87,34 +76,13 @@ function UserModal({
             <label htmlFor="formPassword" className="ui-label">
               {isEditing ? 'New Password (leave blank to keep current)' : 'Password'}
             </label>
-            <div className="password-input-wrap mt-1">
-              <input
-                type={showAdminPassword ? 'text' : 'password'}
-                id="formPassword"
-                value={formPassword}
-                onChange={(e) => setFormPassword(e.target.value)}
-                placeholder={isEditing ? 'Leave blank to keep current' : 'At least 8 characters'}
-              />
-              <button
-                type="button"
-                className="password-toggle-btn"
-                onClick={() => setShowAdminPassword(!showAdminPassword)}
-                aria-label={showAdminPassword ? 'Hide password' : 'Show password'}
-                title={showAdminPassword ? 'Hide password' : 'Show password'}
-              >
-                {showAdminPassword ? (
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
-                    <line x1="1" y1="1" x2="23" y2="23" />
-                  </svg>
-                ) : (
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                    <circle cx="12" cy="12" r="3" />
-                  </svg>
-                )}
-              </button>
-            </div>
+            <PasswordField
+              id="formPassword"
+              value={formPassword}
+              onChange={(e) => setFormPassword(e.target.value)}
+              placeholder={isEditing ? 'Leave blank to keep current' : 'At least 8 characters'}
+              className="mt-1"
+            />
             <p className="text-xs text-muted mt-1.5 mb-0">
               Password must be at least 8 characters long with 1 uppercase, 1 lowercase, 1 number & 1 special symbol.
             </p>
@@ -131,6 +99,7 @@ function UserModal({
                   setFormIsTeamLeader(false);
                 }
               }}
+              disabled={isSelf}
               className="mt-1"
             >
               <option value="Content Team">Content Team</option>
@@ -143,43 +112,25 @@ function UserModal({
               <option value="CTO">CTO</option>
               <option value="Admin">Admin</option>
             </select>
+            {isSelf && (
+              <p className="text-xs text-muted mt-1.5 mb-0" style={{ color: '#d97706' }}>
+                You cannot change your own role.
+              </p>
+            )}
           </div>
           <div className="modal-actions mt-6">
             <button type="button" onClick={() => setIsModalOpen(false)} className="btn-secondary">Cancel</button>
             <button type="submit" className="create-btn">{isEditing ? 'Save Changes' : 'Create User'}</button>
           </div>
         </form>
-      </div>
-    </dialog>
+    </AdminModal>
   );
 }
 
-function UserTableRow({ user, currentUser, openEditModal, handleDeleteClick, fetchUsers, triggerUserReload, allUsers = [] }) {
+function UserTableRow({ user, currentUser, openEditModal, handleDeleteClick }) {
   const isSelf = currentUser && currentUser.username.toLowerCase() === user.username.toLowerCase();
   const avatarBg = AVATAR_COLORS[Math.abs(user.username.split('').reduce((acc, char) => acc + char.codePointAt(0), 0)) % AVATAR_COLORS.length];
   const initial = user.username.charAt(0).toUpperCase();
-
-  const handleToggleTL = async () => {
-    if (!user.isTeamLeader) {
-      const existingTL = allUsers.find(
-        (u) => u.role === user.role && (u.isTeamLeader === true || u.isTeamLeader === 1 || u.isTeamLeader === '1') && u.username.toLowerCase() !== user.username.toLowerCase()
-      );
-      if (existingTL) {
-        alert(`The ${user.role} already has an assigned Team Leader (${existingTL.username}). Each team can only have one Team Leader. Please demote ${existingTL.username} first.`);
-        return;
-      }
-    }
-    try {
-      await api.users.update(user.username, {
-        role: user.role,
-        isTeamLeader: user.isTeamLeader ? 0 : 1
-      });
-      fetchUsers();
-      triggerUserReload();
-    } catch (err) {
-      alert(err.message || 'Failed to update Team Leader status');
-    }
-  };
 
   return (
     <tr key={user.username}>
@@ -509,6 +460,49 @@ function getTesterSignOffText(selectedPackage, openBugsCount) {
   return 'Pending';
 }
 
+function getBannerTitle(isTestingApproved, isClassmateOrCareerMate, isCtoApproved) {
+  if (!isTestingApproved) return 'Awaiting Test Pass Approval';
+  if (isClassmateOrCareerMate) return 'Test Pass Approved — Awaiting Project Manager Final Production Approval';
+  if (!isCtoApproved) return 'Test Pass Approved — Sent to CTO for Release Sign-Off';
+  return 'CTO Release Signed Off — Ready for Production';
+}
+
+function getBannerSubtitle(isTestingApproved, isClassmateOrCareerMate, isCtoApproved) {
+  if (!isTestingApproved) return 'Testing team must approve Test pass before release approval.';
+  if (isClassmateOrCareerMate) return 'Project Manager final approval will authorize DevOps to deploy to live production.';
+  if (!isCtoApproved) return 'CTO release sign-off will authorize DevOps to deploy to live production.';
+  return 'CTO has signed off. DevOps team is authorized to deploy to live production.';
+}
+
+function getDocApprovalBadgeClass(status) {
+  if (status === 'Approved') return 'ui-badge-success';
+  if (status === 'Rejected') return 'ui-badge-danger';
+  return 'ui-badge-warning';
+}
+
+function getDocApprovalBadgeLabel(doc) {
+  if (doc.tlApproval === 'Approved') return `Approved by PM (${doc.tlApprovedBy || 'PM'})`;
+  if (doc.tlApproval === 'Rejected') return 'Rejected by PM';
+  return 'Pending PM Approval';
+}
+
+function getFormValidationError(isEditing, cleanUsername, cleanPassword) {
+  if (!isEditing) {
+    if (!cleanUsername) return 'Please enter a username.';
+    if (!cleanPassword) return 'Please enter a password.';
+    return validatePasswordComplexity(cleanPassword);
+  }
+  if (cleanPassword !== '') {
+    return validatePasswordComplexity(cleanPassword);
+  }
+  return null;
+}
+
+function computeIsTeamLeaderFlag(role, isTeamLeader) {
+  if (role === 'Admin' || role === 'CTO') return 0;
+  return isTeamLeader ? 1 : 0;
+}
+
 function AdminPackageStatusBanner({ selectedPackage, currentUser, triggerReload }) {
   if (selectedPackage.deployed) {
     return (
@@ -546,11 +540,10 @@ function AdminPackageStatusBanner({ selectedPackage, currentUser, triggerReload 
   const userRole = currentUser?.role || '';
   const isCTO = userRole.includes('CTO');
   const isPM = userRole.includes('Project Manager') || userRole === 'Admin';
-  const projName = (selectedPackage.project || '').trim().toLowerCase();
-  const isClassmateOrCareerMate = projName === 'career mate' || projName === 'careermate' || projName === 'classmate' || projName === 'class mate';
+  const isClassmateOrCareerMateProject = isClassmateOrCareerMate(selectedPackage.project);
 
   const handleApproveCTO = async () => {
-    if (isClassmateOrCareerMate) {
+    if (isClassmateOrCareerMateProject) {
       alert('CTO approval is not allowed for Classmate and Career Mate projects. CTO can only approve other projects.');
       return;
     }
@@ -572,34 +565,23 @@ function AdminPackageStatusBanner({ selectedPackage, currentUser, triggerReload 
   };
 
   return (
-    <div className={`qa-banner-card mb-6 d-flex justify-between items-center flex-wrap gap-4 ${(isTestingApproved && (isCtoApproved || isClassmateOrCareerMate)) ? 'qa-approved-banner' : ''}`}>
+    <div className={`qa-banner-card mb-6 d-flex justify-between items-center flex-wrap gap-4 ${(isTestingApproved && (isCtoApproved || isClassmateOrCareerMateProject)) ? 'qa-approved-banner' : ''}`}>
       <div>
         <h3 className="qa-banner-title">
-          {!isTestingApproved 
-            ? 'Awaiting Test Pass Approval' 
-            : isClassmateOrCareerMate
-              ? 'Test Pass Approved — Awaiting Project Manager Final Production Approval'
-              : !isCtoApproved 
-                ? 'Test Pass Approved — Sent to CTO for Release Sign-Off' 
-                : 'CTO Release Signed Off — Ready for Production'}
+          {getBannerTitle(isTestingApproved, isClassmateOrCareerMateProject, isCtoApproved)}
         </h3>
         <p className="qa-banner-subtitle">
-          {!isTestingApproved 
-            ? 'Testing team must approve Test pass before release approval.' 
-            : isClassmateOrCareerMate
-              ? 'Project Manager final approval will authorize DevOps to deploy to live production.'
-              : !isCtoApproved 
-                ? 'CTO release sign-off will authorize DevOps to deploy to live production.' 
-                : 'CTO has signed off. DevOps team is authorized to deploy to live production.'}
+          {getBannerSubtitle(isTestingApproved, isClassmateOrCareerMateProject, isCtoApproved)}
         </p>
-        {isCtoApproved && !isClassmateOrCareerMate && (
+        {isCtoApproved && !isClassmateOrCareerMateProject && (
           <p className="text-xs text-emerald-800 font-bold mb-0 mt-1" style={{ color: '#065f46' }}>
             CTO Sign-Off: Approved by {selectedPackage.ctoApprovedBy || 'CTO'}
           </p>
         )}
       </div>
 
-      {isCTO && !isCtoApproved && !isClassmateOrCareerMate && (
+      {isCTO && !isCtoApproved && !isClassmateOrCareerMateProject && (
+
         <button
           type="button"
           onClick={handleApproveCTO}
@@ -664,8 +646,8 @@ function AdminContentAndDesignSection({ selectedPackage, currentUser, triggerRel
                 )}
               </div>
               <div className="d-flex items-center gap-2">
-                <span className={`ui-badge ui-badge-sm ${doc.tlApproval === 'Approved' ? 'ui-badge-success' : (doc.tlApproval === 'Rejected' ? 'ui-badge-danger' : 'ui-badge-warning')}`}>
-                  {doc.tlApproval === 'Approved' ? `Approved by PM (${doc.tlApprovedBy || 'PM'})` : (doc.tlApproval === 'Rejected' ? 'Rejected by PM' : 'Pending PM Approval')}
+                <span className={`ui-badge ui-badge-sm ${getDocApprovalBadgeClass(doc.tlApproval)}`}>
+                  {getDocApprovalBadgeLabel(doc)}
                 </span>
                 {isPM && doc.fileName && (
                   <div className="d-flex gap-1">
@@ -890,33 +872,6 @@ function getAdminDashboardContent({
   triggerReload,
   onRejectItem,
 }) {
-  if (currentUser?.role === 'Admin') {
-    const totalUsers = users.length;
-    const adminCount = users.filter((u) => u.role === 'Admin').length;
-    const teamCount = users.filter((u) => u.role !== 'Admin').length;
-    const tlCount = users.filter((u) => u.isTeamLeader).length;
-    const filteredUsers = users.filter((u) =>
-      u.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      u.role.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-
-    return (
-      <UserManagementTab
-        openAddModal={openAddModal}
-        totalUsers={totalUsers}
-        adminCount={adminCount}
-        tlCount={tlCount}
-        teamCount={teamCount}
-        filteredUsers={filteredUsers}
-        currentUser={currentUser}
-        openEditModal={openEditModal}
-        handleDeleteClick={handleDeleteClick}
-        fetchUsers={fetchUsers}
-        triggerUserReload={triggerUserReload}
-      />
-    );
-  }
-
   if (activeNav === 'users' && !selectedPackage) {
     if (currentUser?.role !== 'Admin') {
       return (
@@ -1105,32 +1060,20 @@ function AdminDashboard({ currentUser, onLogout, onUpdateUser }) {
     const cleanUsername = formUsername.trim().toLowerCase();
     const cleanPassword = formPassword.trim();
 
-    if (!isEditing) {
-      if (!cleanUsername) {
-        setFormError('Please enter a username.');
-        return;
-      }
-      if (!cleanPassword) {
-        setFormError('Please enter a password.');
-        return;
-      }
-      const complexityErr = validatePasswordComplexity(cleanPassword);
-      if (complexityErr) {
-        setFormError(complexityErr);
-        return;
-      }
-    } else {
-      if (cleanPassword !== '') {
-        const complexityErr = validatePasswordComplexity(cleanPassword);
-        if (complexityErr) {
-          setFormError(complexityErr);
-          return;
-        }
-      }
+    const isSelf = isEditing && currentUser && selectedUsername.trim().toLowerCase() === (currentUser.username || '').trim().toLowerCase();
+    if (isSelf && formRole !== currentUser.role) {
+      setFormError('You cannot change your own role.');
+      return;
+    }
+
+    const validationErr = getFormValidationError(isEditing, cleanUsername, cleanPassword);
+    if (validationErr) {
+      setFormError(validationErr);
+      return;
     }
 
     try {
-      const isTL = (formRole === 'Admin' || formRole === 'CTO') ? 0 : (formIsTeamLeader ? 1 : 0);
+      const isTL = computeIsTeamLeaderFlag(formRole, formIsTeamLeader);
       if (isTL === 1) {
         const existingTL = users.find(
           (u) => u.role === formRole && (u.isTeamLeader === true || u.isTeamLeader === 1 || u.isTeamLeader === '1') && u.username.toLowerCase() !== cleanUsername
@@ -1145,6 +1088,7 @@ function AdminDashboard({ currentUser, onLogout, onUpdateUser }) {
           password: cleanPassword,
           role: formRole,
           isTeamLeader: isTL,
+          requestor: currentUser?.username,
         });
       } else {
         if (users.some((u) => u.username.toLowerCase() === cleanUsername)) {
@@ -1262,6 +1206,7 @@ function AdminDashboard({ currentUser, onLogout, onUpdateUser }) {
             setFormIsTeamLeader={setFormIsTeamLeader}
             formError={formError}
             handleFormSubmit={handleFormSubmit}
+            currentUser={currentUser}
           />
           {rejectionTarget && (
             <RejectionModal

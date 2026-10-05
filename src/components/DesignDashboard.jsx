@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import DashboardShell from './DashboardShell';
-import FlowChartView from './FlowChartView';
 import ProjectsView from './ProjectsView';
-import RoleHistoryView from './RoleHistoryView';
 import { renderSharedDashboardNav } from './dashboardHelpers';
 import { usePackages } from '../hooks/usePackages';
 import { api } from '../services/api';
@@ -22,36 +20,7 @@ function renderDesignThumbnail(isImg, isVid, fileUrl, displayName, typeInfo) {
   );
 }
 
-export function renderDesignStatus(pkg) {
-  const reqFiles = pkg.reqFiles ? pkg.reqFiles.filter((f) => Boolean(f.fileName)) : [];
-  const reqUploaded = pkg.contentUploaded || reqFiles.length > 0;
-  const reqApproved = pkg.contentTlApproved || (reqFiles.length > 0 && reqFiles.every((f) => f.tlApproval === 'Approved'));
-  const isReqReady = Boolean(reqUploaded || reqApproved);
-  const imgCount = pkg.designFiles ? pkg.designFiles.filter((f) => Boolean(f.fileName)).length : 0;
-  if (!isReqReady) {
-    return {
-      label: 'Awaiting Content Requirements',
-      badgeClass: 'pending',
-      linkText: 'View Task Details',
-      linkColor: '#64748b',
-    };
-  }
-  let label = 'Pending Design Assets';
-  let badgeClass = 'pending';
-  if (pkg.designTlApproved) {
-    label = 'Design Approved by TL';
-    badgeClass = 'completed';
-  } else if (imgCount > 0) {
-    label = `${imgCount} Assets Uploaded`;
-    badgeClass = 'approved';
-  }
-  return {
-    label,
-    badgeClass,
-    linkText: 'Manage Digital Assets & Design Images',
-    linkColor: '#d97706',
-  };
-}
+
 
 const WEB_OPTIONS = [
   { id: 'desktop', name: 'Desktop', dimension: '1920*600 px', platform: 'Web' },
@@ -101,8 +70,10 @@ function OptionCard({
   subBadge = null,
   designImages = [],
   selectedPackage,
+  currentUser,
   handleUploadOptionAsset,
   handleDeleteDesignFile,
+  handleApproveDesignFile,
   setViewedPdf,
 }) {
   const optionFiles = designImages.filter((f) => {
@@ -117,7 +88,7 @@ function OptionCard({
     );
   });
 
-  const baseUrl = typeof window !== 'undefined' && window.API_BASE_URL ? window.API_BASE_URL : 'http://localhost:3001';
+  const baseUrl = typeof window !== 'undefined' && window.API_BASE_URL ? window.API_BASE_URL : 'project-management-production-2612.up.railway.app';
   const hasFiles = optionFiles.length > 0;
 
   const getCleanDisplayName = (file) => {
@@ -184,21 +155,35 @@ function OptionCard({
 
                 <div className="digital-file-meta">
                   <span className="digital-file-name" title={displayName}>{displayName}</span>
-                  <div className="d-flex justify-between items-center mt-1">
+                  <div className="d-flex justify-between items-center gap-1 mt-1">
                     <span className="digital-file-size">{file.fileSize || file.platform || 'File'}</span>
-                    <button
-                      type="button"
-                      className="digital-file-delete-btn"
-                      onClick={() => handleDeleteDesignFile(selectedPackage.id, file.id)}
-                      title="Delete file"
-                    >
-                      Delete
-                    </button>
+                    <div className="d-flex items-center gap-1">
+                      {(currentUser?.role?.includes('Project Manager') || currentUser?.role === 'CTO' || currentUser?.role === 'Admin') && file.tlApproval !== 'Approved' && (
+                        <button
+                          type="button"
+                          className="digital-file-approve-btn"
+                          onClick={() => handleApproveDesignFile(selectedPackage.id, file.id)}
+                          title="Approve design asset"
+                          style={{ backgroundColor: '#10b981', color: '#ffffff', border: 0, padding: '2px 6px', borderRadius: '4px', fontSize: '0.72rem', fontWeight: 'bold', cursor: 'pointer' }}
+                        >
+                          Approve
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        className="digital-file-delete-btn"
+                        onClick={() => handleDeleteDesignFile(selectedPackage.id, file.id)}
+                        title="Delete file"
+                      >
+                        Delete
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
             );
           })}
+
 
           <button
             type="button"
@@ -266,9 +251,11 @@ function DesignPackageDetailsView({
   designImages,
   handleUploadOptionAsset,
   handleDeleteDesignFile,
+  handleApproveDesignFile,
   handleUpdateDesignFile,
   uncategorizedFiles,
 }) {
+
   return (
     <div>
       <div className="content-header mb-6">
@@ -482,8 +469,10 @@ function DesignPackageDetailsView({
                 platform={opt.platform}
                 designImages={designImages}
                 selectedPackage={selectedPackage}
+                currentUser={currentUser}
                 handleUploadOptionAsset={handleUploadOptionAsset}
                 handleDeleteDesignFile={handleDeleteDesignFile}
+                handleApproveDesignFile={handleApproveDesignFile}
                 setViewedPdf={setViewedPdf}
               />
             ))}
@@ -515,8 +504,10 @@ function DesignPackageDetailsView({
                 platform={opt.platform}
                 designImages={designImages}
                 selectedPackage={selectedPackage}
+                currentUser={currentUser}
                 handleUploadOptionAsset={handleUploadOptionAsset}
                 handleDeleteDesignFile={handleDeleteDesignFile}
+                handleApproveDesignFile={handleApproveDesignFile}
                 setViewedPdf={setViewedPdf}
               />
             ))}
@@ -549,13 +540,16 @@ function DesignPackageDetailsView({
                 isVideo={opt.isVideo}
                 designImages={designImages}
                 selectedPackage={selectedPackage}
+                currentUser={currentUser}
                 handleUploadOptionAsset={handleUploadOptionAsset}
                 handleDeleteDesignFile={handleDeleteDesignFile}
+                handleApproveDesignFile={handleApproveDesignFile}
                 setViewedPdf={setViewedPdf}
               />
             ))}
           </div>
         </div>
+
 
         {/* UNCATEGORIZED / OTHER ASSETS */}
         {uncategorizedFiles.length > 0 && (
@@ -563,7 +557,7 @@ function DesignPackageDetailsView({
             <h3 className="ui-card-title mb-3">Other / Legacy Assets ({uncategorizedFiles.length})</h3>
             <div className="digital-files-grid">
               {uncategorizedFiles.map((file) => {
-                const baseUrl = typeof window !== 'undefined' && window.API_BASE_URL ? window.API_BASE_URL : 'http://localhost:3001';
+                const baseUrl = typeof window !== 'undefined' && window.API_BASE_URL ? window.API_BASE_URL : 'project-management-production-2612.up.railway.app';
                 const fileUrl = file.fileName ? `${baseUrl}/uploads/${file.fileName}` : null;
                 const typeInfo = getFileTypeDetails(file.fileName);
                 const ext = file.fileName ? file.fileName.split('.').pop().toLowerCase() : '';
@@ -633,9 +627,11 @@ function getDesignDashboardContent({
   designImages,
   handleUploadOptionAsset,
   handleDeleteDesignFile,
+  handleApproveDesignFile,
   handleUpdateDesignFile,
   uncategorizedFiles,
 }) {
+
   const sharedContent = renderSharedDashboardNav({
     activeNav,
     selectedPackage,
@@ -675,11 +671,13 @@ function getDesignDashboardContent({
         designImages={designImages}
         handleUploadOptionAsset={handleUploadOptionAsset}
         handleDeleteDesignFile={handleDeleteDesignFile}
+        handleApproveDesignFile={handleApproveDesignFile}
         handleUpdateDesignFile={handleUpdateDesignFile}
         uncategorizedFiles={uncategorizedFiles}
       />
     );
   }
+
 
   return (
     <ProjectsView
@@ -821,7 +819,17 @@ function DesignDashboard({ currentUser, onLogout, onUpdateUser }) {
     }
   };
 
+  const handleApproveDesignFile = async (packageId, fileId) => {
+    try {
+      await api.packages.approveDesignTL(packageId, fileId, currentUser?.username || 'Project Manager');
+      triggerReload();
+    } catch (err) {
+      alert(err.message || 'Failed to approve design file.');
+    }
+  };
+
   const handleDeleteDesignFile = async (packageId, fileId) => {
+
     if (!window.confirm('Are you sure you want to delete this asset?')) return;
     try {
       await api.packages.deleteDesignFile(packageId, fileId);
@@ -935,9 +943,11 @@ function DesignDashboard({ currentUser, onLogout, onUpdateUser }) {
     designImages,
     handleUploadOptionAsset,
     handleDeleteDesignFile,
+    handleApproveDesignFile,
     handleUpdateDesignFile,
     uncategorizedFiles,
   });
+
 
   return (
     <DashboardShell

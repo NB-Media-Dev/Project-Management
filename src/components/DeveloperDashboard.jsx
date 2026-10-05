@@ -76,41 +76,7 @@ function getDevBuildFilesList(pkg) {
   return [];
 }
 
-// NOTE: this is gated on `designUploaded`, which is a different condition
-// than the package-card status shown inside this dashboard (see
-// `renderDeveloperCardStatus` below, gated on content-TL approval). Keep
-// these distinct on purpose — don't merge without confirming both call
-// sites should share one gate.
-export function renderDevStatus(pkg) {
-  const isDesignReady = Boolean(
-    pkg.designUploaded || (pkg.designFiles?.some((f) => Boolean(f.fileName)))
-  );
-  const devBuilds = pkg.devBuildFiles || pkg.devBuilds || [];
 
-  if (!isDesignReady) {
-    return {
-      label: 'Awaiting Digital Assets',
-      badgeClass: 'pending',
-      linkText: 'View Task Details',
-      linkColor: '#64748b',
-    };
-  }
-  let label = 'In Development';
-  let badgeClass = 'pending';
-  if (pkg.submittedToDevops) {
-    label = 'Submitted to DevOps';
-    badgeClass = 'completed';
-  } else if (devBuilds.length > 0) {
-    label = `${devBuilds.length} Build(s) Uploaded`;
-    badgeClass = 'approved';
-  }
-  return {
-    label,
-    badgeClass,
-    linkText: 'Manage Build Files & Submission',
-    linkColor: '#3b82f6',
-  };
-}
 
 function DevBuildUploadModal({
   isOpen,
@@ -222,7 +188,7 @@ function DeveloperPackageDetailsView({
     if (assets.length === 0) {
       return <p className="no-data text-xs text-muted mb-0">{emptyMessage}</p>;
     }
-    const baseUrl = typeof window !== 'undefined' && window.API_BASE_URL ? window.API_BASE_URL : 'http://localhost:3001';
+    const baseUrl = typeof window !== 'undefined' && window.API_BASE_URL ? window.API_BASE_URL : 'project-management-production-2612.up.railway.app';
     return (
       <div className="digital-files-grid mt-2">
         {assets.map((asset) => (
@@ -406,7 +372,7 @@ function DeveloperPackageDetailsView({
         <div className="grid-2col">
           {selectedPackage.contentFiles?.length > 0 ? (
             selectedPackage.contentFiles.map((req) => {
-              const baseUrl = typeof window !== 'undefined' && window.API_BASE_URL ? window.API_BASE_URL : 'http://localhost:3001';
+              const baseUrl = typeof window !== 'undefined' && window.API_BASE_URL ? window.API_BASE_URL : 'project-management-production-2612.up.railway.app';
               const fileUrl = req.fileName ? `${baseUrl}/uploads/${req.fileName}` : null;
               const typeInfo = getFileTypeDetails(req.fileName);
               return (

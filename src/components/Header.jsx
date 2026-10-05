@@ -1,133 +1,31 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React from 'react';
 import ReactDOM from 'react-dom';
-import { api } from '../services/api';
 import { formatTime, getAvatarUrl } from '../utils/fileUtils';
 import NotificationToast from './NotificationToast';
+import { useNotifications } from '../hooks/useNotifications';
 
 function Header({ currentUser, searchQuery, handleSearchChange, onLogout, onOpenProfile, onNavigatePackage, isMobileMenuOpen, onToggleMobileMenu }) {
   const username = currentUser ? currentUser.username : '';
   const currentRole = currentUser ? currentUser.role : '';
 
-  const [notifications, setNotifications] = useState([]);
-  const [isOpen, setIsOpen] = useState(false);
-  const [toasts, setToasts] = useState([]);
-  const seenNotifIdsRef = useRef(new Set());
-  const isFirstLoadRef = useRef(true);
-  const dropdownRef = useRef(null);
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 5;
-  const totalPages = Math.ceil(notifications.length / itemsPerPage) || 1;
-
-  useEffect(() => {
-    if (currentPage > totalPages) {
-      setCurrentPage(totalPages);
-    }
-  }, [notifications.length, totalPages, currentPage]);
-
-  const pagedNotifications = notifications.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
-
-  useEffect(() => {
-    if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'default') {
-      Notification.requestPermission().catch(() => {});
-    }
-  }, []);
-
-  useEffect(() => {
-    seenNotifIdsRef.current = new Set();
-    setToasts([]);
-  }, [username, currentRole]);
-
-  const fetchNotifications = useCallback(async () => {
-    if (!currentRole || !username) return;
-    try {
-      const data = await api.notifications.get(currentRole, username);
-      const isSelfNotification = (n) => {
-        if (!username) return false;
-        const uLower = username.trim().toLowerCase();
-        const sUser = (n.senderUsername || '').trim().toLowerCase();
-        if (sUser && sUser === uLower) return true;
-        return false;
-      };
-
-      const validNotifs = data.filter((n) => !isSelfNotification(n));
-      setNotifications(validNotifs);
-
-      const unreadItems = validNotifs.filter(
-        (n) => !n.isRead && !seenNotifIdsRef.current.has(n.id)
-      );
-
-      if (unreadItems.length > 0) {
-        unreadItems.forEach((n) => seenNotifIdsRef.current.add(n.id));
-        setToasts((prev) => [...unreadItems, ...prev]);
-
-        if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
-          unreadItems.slice(0, 3).forEach((item) => {
-            try {
-              new Notification('New Notification', {
-                body: item.message,
-              });
-            } catch {}
-          });
-        }
-      }
-    } catch {
-    }
-  }, [currentRole, username]);
-
-  const handleCloseToast = useCallback((toastId) => {
-    setToasts((prev) => prev.filter((t) => t.id !== toastId));
-  }, []);
-
-  const handleNotificationClick = async (item) => {
-    try {
-      if (!item.isRead) {
-        await api.notifications.markRead(item.id, username);
-        fetchNotifications();
-      }
-      setIsOpen(false);
-      if (onNavigatePackage && item.projectName && item.packageId) {
-        onNavigatePackage(item.projectName, item.packageId);
-      }
-    } catch {
-    }
-  };
-
-  useEffect(() => {
-    fetchNotifications();
-    const interval = setInterval(fetchNotifications, 5000);
-    const handleStorageChange = (e) => {
-      if (e.key === 'pm_packages_v4') fetchNotifications();
-    };
-    window.addEventListener('storage', handleStorageChange);
-    const handleClickOutside = (e) => {
-      if (
-        dropdownRef.current && !dropdownRef.current.contains(e.target) &&
-        bellRef.current && !bellRef.current.contains(e.target)
-      ) {
-        setIsOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      clearInterval(interval);
-      window.removeEventListener('storage', handleStorageChange);
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [fetchNotifications]);
-
-  const handleMarkAllRead = async () => {
-    if (!currentRole || !username) return;
-    try {
-      await api.notifications.markAllRead(currentRole, username);
-      fetchNotifications();
-    } catch {
-    }
-  };
-
-  const unreadCount = notifications.filter(n => !n.isRead).length;
+  const {
+    notifications,
+    pagedNotifications,
+    unreadCount,
+    isOpen,
+    setIsOpen,
+    toasts,
+    bellRef,
+    dropdownRef,
+    panelPos,
+    setPanelPos,
+    currentPage,
+    setCurrentPage,
+    totalPages,
+    handleCloseToast,
+    handleNotificationClick,
+    handleMarkAllRead,
+  } = useNotifications(currentUser, onNavigatePackage);
 
   return (
     <header className="header-bar">

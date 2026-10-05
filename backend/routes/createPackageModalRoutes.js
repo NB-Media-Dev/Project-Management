@@ -1,6 +1,6 @@
 import express from 'express';
 import db from '../../db.js';
-import { asyncHandler, formatDueDateForDb, createNotification, notifyIncompleteTeams } from '../utils/helpers.js';
+import { asyncHandler, formatDueDateForDb, createNotification, notifyIncompleteTeams, isClassmateOrCareerMate } from '../utils/helpers.js';
 
 const router = express.Router();
 
@@ -11,9 +11,9 @@ router.post('/api/packages', asyncHandler(async (req, res) => {
 
   const projLower = (project || '').trim().toLowerCase();
   const roleLower = role.trim().toLowerCase();
-  const isClassmateOrCareerMate = projLower === 'career mate' || projLower === 'careermate' || projLower === 'classmate' || projLower === 'class mate';
+  const isSpecialProject = isClassmateOrCareerMate(projLower);
   
-  if (roleLower.includes('cto') && isClassmateOrCareerMate) {
+  if (roleLower.includes('cto') && isSpecialProject) {
     return res.status(400).json({ error: 'CTO cannot create new tasks for Classmate or Career Mate projects.' });
   }
 
