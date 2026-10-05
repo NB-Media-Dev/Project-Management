@@ -46,6 +46,7 @@ function Login({ onLogin }) {
             <input
               type="text"
               id="loginUsername"
+              autoComplete="username"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               placeholder="Username"
