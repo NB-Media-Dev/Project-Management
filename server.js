@@ -24,9 +24,9 @@ const app = express();
 app.disable('x-powered-by');
 const port = process.env.PORT || 3001;
 
-app.use(validateContentLength);
-
+// --- 1. CONFIGURATIONS & HELPERS ---
 const corsOriginEnv = process.env.CORS_ORIGIN;
+
 function stripTrailingSlash(str) {
   if (!str) return str;
   let s = str.trim();
@@ -36,6 +36,7 @@ function stripTrailingSlash(str) {
   return s;
 }
 
+// --- 2. CORS MIDDLEWARE (MUST BE FIRST) ---
 app.use(cors({
   origin: (origin, callback) => {
     if (!origin) return callback(null, true);
@@ -51,15 +52,19 @@ app.use(cors({
       return callback(null, true);
     }
 
-    if (/^https?:\/\/(?:localhost|127\.0\.0\.1|(?:10|192\.168|172\.(?:1[6-9]|2\d|3[01]))\.\d+\.\d+)(?::\d+)?$/.test(normalizedOrigin)) {
+    // RegEx checking for localhost and internal subnets
+    if (/^https?:\/\/(?:localhost|127\.0\.0\.1|(?:10|192\.168|172\.(?:1[6-9]|2\d|3[01]))\.\d+\.\d+)(?::\d+)?\$/.test(normalizedOrigin)) {
       return callback(null, true);
     }
 
     return callback(null, true);
   },
-  credentials: true
+  credentials: true,
+  optionsSuccessStatus: 204 // Crucial for Railway & Vercel edge networks
 }));
 
+// --- 3. OTHER MIDDLEWARES (RUN AFTER CORS HANDSHAKE) ---
+app.use(validateContentLength);
 app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ limit: '1mb', extended: true }));
 app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
