@@ -57,6 +57,7 @@ function Login({ onLogin }) {
             <label htmlFor="loginPassword">Password</label>
             <PasswordField
               id="loginPassword"
+              autoComplete="current-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Enter password"

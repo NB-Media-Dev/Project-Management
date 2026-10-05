@@ -4,6 +4,7 @@ function PasswordField({
   id = 'passwordInput',
   value,
   onChange,
+  autoComplete,
   placeholder = 'Enter password',
   required = false,
   disabled = false,
@@ -18,6 +19,7 @@ function PasswordField({
         id={id}
         value={value}
         onChange={onChange}
+        autoComplete={autoComplete}
         placeholder={placeholder}
         required={required}
         disabled={disabled}
