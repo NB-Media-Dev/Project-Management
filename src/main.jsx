@@ -3,7 +3,7 @@ import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.jsx'
 
-window.API_BASE_URL = `https://project-management-pv1a.onrender.com`;
+window.API_BASE_URL = `project-management-production-2612.up.railway.app`;
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
