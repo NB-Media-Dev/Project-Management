@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import mysql from 'mysql2/promise';
 
-
+// Load local environment variables from .env if it exists
 try {
   const envPath = path.join(process.cwd(), '.env');
   if (fs.existsSync(envPath)) {
@@ -25,12 +25,14 @@ try {
   console.error('Failed to load .env file:', err.message);
 }
 
-const dbHost = process.env.DB_HOST || '127.0.0.1';
-const dbUser = process.env.DB_USER || 'root';
-const dbPassword = process.env.DB_PASSWORD || 'password';
-const dbPort = Number.parseInt(process.env.DB_PORT, 10) || 3303;
-const dbName = process.env.DB_NAME || 'pm_database';
+// Fallbacks support standard variable names, Railway's default keys, or local values
+const dbHost = process.env.DB_HOST || process.env.MYSQLHOST || '127.0.0.1';
+const dbUser = process.env.DB_USER || process.env.MYSQLUSER || 'root';
+const dbPassword = process.env.DB_PASSWORD || process.env.MYSQLPASSWORD || 'password';
+const dbPort = Number.parseInt(process.env.DB_PORT || process.env.MYSQLPORT, 10) || 3306;
+const dbName = process.env.DB_NAME || process.env.MYSQLDATABASE || 'pm_database';
 
+// Establish the connection pool
 const pool = mysql.createPool({
   host: dbHost,
   user: dbUser,
@@ -48,4 +50,3 @@ pool.on('error', (err) => {
 });
 
 export default pool;
-
