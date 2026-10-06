@@ -8,20 +8,41 @@ import DevopsDashboard from './components/DevopsDashboard';
 import TestingDashboard from './components/TestingDashboard';
 import AdminDashboard from './components/AdminDashboard';
 
+const ROLES = [
+  'Content Team',
+  'Design Team',
+  'Developer Team',
+  'Devops Team',
+  'Testing Team',
+  'Project Manager (Career Mate)',
+  'Project Manager (Classmate)',
+  'Admin',
+  'CTO',
+];
+
+function normalizeUser(userData) {
+  if (!userData || typeof userData !== 'object') return null;
+
+  const role = typeof userData.role === 'string' ? userData.role.trim() : '';
+  const canonicalRole = ROLES.find((knownRole) => knownRole.toLowerCase() === role.toLowerCase());
+  return { ...userData, role: canonicalRole || role };
+}
+
 function App() {
   const [user, setUser] = useState(() => {
     try {
       const savedUser = localStorage.getItem('pm_current_user');
-      return savedUser ? JSON.parse(savedUser) : null;
+      return savedUser ? normalizeUser(JSON.parse(savedUser)) : null;
     } catch {
       return null;
     }
   });
 
   const handleLogin = (userData) => {
-    setUser(userData);
+    const normalizedUser = normalizeUser(userData);
+    setUser(normalizedUser);
     try {
-      localStorage.setItem('pm_current_user', JSON.stringify(userData));
+      localStorage.setItem('pm_current_user', JSON.stringify(normalizedUser));
     } catch {
       
     }
@@ -39,7 +60,7 @@ function App() {
   const handleUpdateUser = (updatedData) => {
     setUser((prev) => {
       if (!prev) return prev;
-      const updated = { ...prev, ...updatedData };
+      const updated = normalizeUser({ ...prev, ...updatedData });
       try {
         localStorage.setItem('pm_current_user', JSON.stringify(updated));
       } catch {
@@ -71,7 +92,15 @@ function App() {
       case 'CTO':
         return <AdminDashboard currentUser={user} onLogout={handleLogout} onUpdateUser={handleUpdateUser} />;
       default:
-        return <ContentDashboard currentUser={user} onLogout={handleLogout} onUpdateUser={handleUpdateUser} />;
+        return (
+          <main className="playful-main">
+            <div className="playful-content">
+              <h1>Unable to open dashboard</h1>
+              <p>The account has an unrecognized role. Contact an administrator to update it.</p>
+              <button type="button" onClick={handleLogout}>Sign out</button>
+            </div>
+          </main>
+        );
     }
   };
 

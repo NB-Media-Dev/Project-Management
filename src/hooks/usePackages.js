@@ -13,7 +13,8 @@ export function usePackages(initialProject = 'All Projects', currentUser = null)
   }
   const effectiveInitial = lockedProject || initialProject;
 
-  const [activeNav, setActiveNav] = useState('flowchart');
+  const isAdmin = typeof currentUser?.role === 'string' && currentUser.role.trim().toLowerCase() === 'admin';
+  const [activeNav, setActiveNav] = useState(isAdmin ? 'users' : 'flowchart');
   const [selectedProjectState, setSelectedProjectState] = useState(effectiveInitial);
 
   const selectedProject = lockedProject || selectedProjectState;
