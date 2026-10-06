@@ -166,6 +166,10 @@ export function getPMProjectForRole(role) {
 
 export async function createNotification(packageId, message, targetRoles, senderUsername = null, senderRole = null) {
   try {
+    const uniqueRoles = Array.from(new Set(targetRoles || []))
+      .filter((role) => typeof role === 'string' && inferRole(role) !== 'Admin');
+    if (uniqueRoles.length === 0) return;
+
     const finalSenderRole = senderRole || inferRole(senderUsername);
     const finalSenderUser = senderUsername || finalSenderRole;
 
@@ -173,7 +177,6 @@ export async function createNotification(packageId, message, targetRoles, sender
     const packageName = rows.length > 0 ? rows[0].name : 'Unknown';
     const formattedMessage = message.replace('{package}', packageName);
 
-    const uniqueRoles = Array.from(new Set(targetRoles || []));
     for (const role of uniqueRoles) {
       try {
         await db.query(
@@ -241,8 +244,6 @@ export async function notifyIncompleteTeams(packageId, dueDateStr) {
     if (!pkg.submitted_to_devops) incompleteRoles.push('Developer Team');
     if (!pkg.devops_staging_uploaded) incompleteRoles.push('Devops Team');
     if (!pkg.testing_tl_approved) incompleteRoles.push('Testing Team');
-    if (!pkg.final_admin_approved || !pkg.deployed) incompleteRoles.push('Admin');
-
     if (incompleteRoles.length > 0) {
       await createNotification(
         packageId,

@@ -83,7 +83,7 @@ router.put('/api/packages/:id/devops-staging', asyncHandler(async (req, res) => 
     );
   }
 
-  await createNotification(id, `DevOps team updated deployment links (Staging: ${finalStagingUrl}${finalProdUrl ? ', Production: ' + finalProdUrl : ''}) for package {package}.`, ['Testing Team', 'Project Manager', 'Admin'], devopsUser, 'Devops Team');
+  await createNotification(id, `DevOps team updated deployment links (Staging: ${finalStagingUrl}${finalProdUrl ? ', Production: ' + finalProdUrl : ''}) for package {package}.`, ['Testing Team', 'Project Manager'], devopsUser, 'Devops Team');
   res.json({ success: true, stagingUrl: finalStagingUrl, productionUrl: finalProdUrl });
 }));
 
@@ -120,7 +120,7 @@ router.put('/api/packages/:id/deploy', asyncHandler(async (req, res) => {
     'UPDATE packages SET deployed = TRUE, demo_url = ?, demo_description = ? WHERE id = ?',
     [finalDemoUrl, finalDemoDesc, id]
   );
-  await createNotification(id, 'Devops Team deployed package {package} to production', ['Testing Team', 'Admin', 'CTO', 'Content Team', 'Developer Team'], deployedBy || 'Devops Team', 'Devops Team');
+  await createNotification(id, 'Devops Team deployed package {package} to production', ['Testing Team', 'CTO', 'Content Team', 'Developer Team'], deployedBy || 'Devops Team', 'Devops Team');
   res.json({ success: true });
 }));
 
