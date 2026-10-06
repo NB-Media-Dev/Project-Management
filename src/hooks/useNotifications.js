@@ -52,10 +52,10 @@ export function useNotifications(currentUser, onNavigatePackage) {
   );
 
   useEffect(() => {
-    if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'default') {
+    if (currentRole && currentRole !== 'Admin' && typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'default') {
       Notification.requestPermission().catch(() => {});
     }
-  }, []);
+  }, [currentRole]);
 
   useEffect(() => {
     seenNotifIdsRef.current = new Set();

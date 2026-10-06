@@ -28,6 +28,9 @@ function PageNavigator({
     filteredPackages = [],
   } = packagesState || {};
 
+  const username = currentUser?.username || '';
+  const currentRole = currentUser?.role || '';
+
   const {
     notifications,
     pagedNotifications,
@@ -45,10 +48,7 @@ function PageNavigator({
     handleCloseToast,
     handleNotificationClick,
     handleMarkAllRead,
-  } = useNotifications(currentUser, onNavigatePackage);
-
-  const username = currentUser?.username || '';
-  const currentRole = currentUser?.role || '';
+  } = useNotifications(currentRole === 'Admin' ? null : currentUser, onNavigatePackage);
 
   const handleNavClick = (navId) => {
     setActiveNav(navId);
@@ -94,7 +94,8 @@ function PageNavigator({
           <button type="button" className="page-nav-logout" onClick={onLogout}>
             Sign out
           </button>
-          <div className="page-nav-notif-wrap navbar-end-notif">
+          {currentRole !== 'Admin' && (
+            <div className="page-nav-notif-wrap navbar-end-notif">
             <button
               ref={bellRef}
               type="button"
@@ -185,6 +186,7 @@ function PageNavigator({
               document.body
             )}
           </div>
+          )}
         </div>
       </div>
 
@@ -208,11 +210,13 @@ function PageNavigator({
           })}
         </nav>  
       </div>
-      <NotificationToast
-        toasts={toasts}
-        onClose={handleCloseToast}
-        onClickToast={handleNotificationClick}
-      />
+      {currentRole !== 'Admin' && (
+        <NotificationToast
+          toasts={toasts}
+          onClose={handleCloseToast}
+          onClickToast={handleNotificationClick}
+        />
+      )}
     </div>
   );
 }
