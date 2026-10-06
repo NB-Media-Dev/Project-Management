@@ -77,26 +77,42 @@ export const getFileTypeDetails = (filename) => {
   }
 };
 
+const parseDisplayDate = (value) => {
+  if (!value) return null;
+  if (value instanceof Date) return Number.isNaN(value.getTime()) ? null : value;
+
+  const input = String(value).trim();
+  if (!input) return null;
+
+  const parsed = new Date(input);
+  if (!Number.isNaN(parsed.getTime())) return parsed;
+
+  const sqlMatch = input.match(/^(\d{4})-(\d{2})-(\d{2})[T\s](\d{2}):(\d{2})(?::(\d{2}))?(?:\.(\d+))?$/);
+  if (!sqlMatch) return null;
+
+  const [, year, month, day, hour, minute, second = '0', ms = '0'] = sqlMatch;
+  const fractional = String(ms).padEnd(3, '0').slice(0, 3);
+  return new Date(
+    Number(year),
+    Number(month) - 1,
+    Number(day),
+    Number(hour),
+    Number(minute),
+    Number(second),
+    Number(fractional)
+  );
+};
+
 export const formatTime = (isoString) => {
-  if (!isoString) return '';
-  try {
-    const date = new Date(isoString);
-    if (Number.isNaN(date.getTime())) return '';
-    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + ' · ' + date.toLocaleDateString();
-  } catch {
-    return '';
-  }
+  const date = parseDisplayDate(isoString);
+  if (!date) return '';
+  return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + ' · ' + date.toLocaleDateString();
 };
 
 export const formatTimestamp = (isoString) => {
-  if (!isoString) return '';
-  try {
-    const d = new Date(isoString);
-    if (Number.isNaN(d.getTime())) return isoString;
-    return d.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' }) + ' · ' + d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  } catch {
-    return isoString;
-  }
+  const date = parseDisplayDate(isoString);
+  if (!date) return isoString || '';
+  return date.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' }) + ' · ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 };
 
 export const formatFileSize = (bytes) => {
