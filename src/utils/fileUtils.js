@@ -84,35 +84,32 @@ const parseDisplayDate = (value) => {
   const input = String(value).trim();
   if (!input) return null;
 
-  const parsed = new Date(input);
-  if (!Number.isNaN(parsed.getTime())) return parsed;
-
   const sqlMatch = input.match(/^(\d{4})-(\d{2})-(\d{2})[T\s](\d{2}):(\d{2})(?::(\d{2}))?(?:\.(\d+))?$/);
-  if (!sqlMatch) return null;
+  if (sqlMatch) {
+    const [, year, month, day, hour, minute, second = '0', ms = '0'] = sqlMatch;
+    const fractional = String(ms).padEnd(3, '0').slice(0, 3);
+    const date = new Date(0);
+    date.setUTCFullYear(Number(year), Number(month) - 1, Number(day));
+    date.setUTCHours(Number(hour), Number(minute), Number(second), Number(fractional));
+    return date;
+  }
 
-  const [, year, month, day, hour, minute, second = '0', ms = '0'] = sqlMatch;
-  const fractional = String(ms).padEnd(3, '0').slice(0, 3);
-  return new Date(
-    Number(year),
-    Number(month) - 1,
-    Number(day),
-    Number(hour),
-    Number(minute),
-    Number(second),
-    Number(fractional)
-  );
+  const parsed = new Date(input);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
 };
 
 export const formatTime = (isoString) => {
   const date = parseDisplayDate(isoString);
   if (!date) return '';
-  return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + ' · ' + date.toLocaleDateString();
+  return date.toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit' }) + ' · ' +
+    date.toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' });
 };
 
 export const formatTimestamp = (isoString) => {
   const date = parseDisplayDate(isoString);
   if (!date) return isoString || '';
-  return date.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' }) + ' · ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  return date.toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', month: 'short', day: 'numeric', year: 'numeric' }) + ' · ' +
+    date.toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit' });
 };
 
 export const formatFileSize = (bytes) => {
