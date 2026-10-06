@@ -167,7 +167,6 @@ code, pre, .font-mono, .code-snippet, .commit-hash, .tech-tag {
   width: 150px;
   height: 150px;
   object-fit: contain;
-  transition: transform 0.2s ease;
 }
 
 .page-nav-brand-logo:hover {
