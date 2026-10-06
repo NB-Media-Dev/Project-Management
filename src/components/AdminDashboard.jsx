@@ -872,7 +872,7 @@ function getAdminDashboardContent({
   triggerReload,
   onRejectItem,
 }) {
-  if (activeNav === 'users' && !selectedPackage) {
+  if (currentUser?.role === 'Admin' || (activeNav === 'users' && !selectedPackage)) {
     if (currentUser?.role !== 'Admin') {
       return (
         <div className="qa-banner-card text-center text-muted mb-6" style={{ padding: '2rem' }}>
@@ -999,7 +999,9 @@ function AdminDashboard({ currentUser, onLogout, onUpdateUser }) {
     } catch { }
   }, []);
 
-  useEffect(() => { fetchUsers(); }, [fetchUsers]);
+  useEffect(() => {
+    if (currentUser?.role === 'Admin') fetchUsers();
+  }, [currentUser?.role, fetchUsers]);
 
   useEffect(() => {
     if (currentUser?.role === 'Admin') {
@@ -1008,10 +1010,12 @@ function AdminDashboard({ currentUser, onLogout, onUpdateUser }) {
   }, [currentUser, setActiveNav]);
 
   useEffect(() => {
-    const handleStorageChange = (e) => { if (e.key === 'pm_users') fetchUsers(); };
+    const handleStorageChange = (e) => {
+      if (currentUser?.role === 'Admin' && e.key === 'pm_users') fetchUsers();
+    };
     window.addEventListener('storage', handleStorageChange);
     return () => window.removeEventListener('storage', handleStorageChange);
-  }, [fetchUsers]);
+  }, [currentUser?.role, fetchUsers]);
 
   const triggerUserReload = () => {
     fetchUsers();
