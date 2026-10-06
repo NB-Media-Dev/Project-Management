@@ -75,7 +75,7 @@ export const getFileTypeDetails = (filename) => {
     default:
       return { label: 'FILE', color: '#475569' };
   }
-};
+}; 
 
 const parseDisplayDate = (value) => {
   if (!value) return null;

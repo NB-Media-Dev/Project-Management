@@ -8,6 +8,7 @@ router.get('/api/notifications', asyncHandler(async (req, res) => {
   const { role, username } = req.query;
   if (!role || !username) return res.status(400).json({ error: 'Role and username are required' });
   const inferredRole = inferRole(role);
+  if (inferredRole === 'Admin') return res.json([]);
   const userRoleLower = (role || inferredRole).trim().toLowerCase();
   const userNameLower = username.trim().toLowerCase();
   const pmProject = getPMProjectForRole(inferredRole) || getPMProjectForRole(role);
@@ -81,6 +82,7 @@ router.put('/api/notifications/read', asyncHandler(async (req, res) => {
   const { role, username } = req.query;
   if (!role || !username) return res.status(400).json({ error: 'Role and username are required' });
   const inferredRole = inferRole(role);
+  if (inferredRole === 'Admin') return res.json({ success: true });
   const userRoleLower = (role || inferredRole).trim().toLowerCase();
 
   const [unread] = await db.query(
