@@ -78,7 +78,6 @@ export const getFileTypeDetails = (filename) => {
 }; 
 
 const INDIA_TIME_ZONE = 'Asia/Kolkata';
-const INDIA_TIME_ZONE_OFFSET_MINUTES = 330;
 
 const parseDisplayDate = (value) => {
   if (!value) return null;
@@ -94,7 +93,6 @@ const parseDisplayDate = (value) => {
     const date = new Date(0);
     date.setUTCFullYear(Number(year), Number(month) - 1, Number(day));
     date.setUTCHours(Number(hour), Number(minute), Number(second), Number(fractional));
-    date.setUTCMinutes(date.getUTCMinutes() - INDIA_TIME_ZONE_OFFSET_MINUTES);
     return date;
   }
 
