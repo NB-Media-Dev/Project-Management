@@ -1,6 +1,6 @@
 import express from 'express';
 import db from '../../db.js';
-import { asyncHandler, inferRole, getPMProjectForRole, markNotificationAsRead } from '../utils/helpers.js';
+import { asyncHandler, formatTimestampInIndia, inferRole, getPMProjectForRole, markNotificationAsRead } from '../utils/helpers.js';
 
 const router = express.Router();
 
@@ -74,7 +74,10 @@ router.get('/api/notifications', asyncHandler(async (req, res) => {
     }
   }
 
-  res.json(validRows);
+  res.json(validRows.map((notification) => ({
+    ...notification,
+    createdAt: formatTimestampInIndia(notification.createdAt),
+  })));
 
 }));
 

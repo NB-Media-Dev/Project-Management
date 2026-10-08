@@ -16,6 +16,22 @@ export function formatDateIso(d) {
   return `${yr}-${mo}-${da}`;
 }
 
+export function formatTimestampInIndia(timestamp) {
+  if (!timestamp) return timestamp;
+
+  if (timestamp instanceof Date && Number.isNaN(timestamp.getTime())) return timestamp;
+  const value = timestamp instanceof Date ? timestamp.toISOString() : String(timestamp).trim();
+  const sqlTimestamp = value.match(/^(\d{4}-\d{2}-\d{2})[ T](\d{2}:\d{2})(?::(\d{2})(?:\.(\d+))?)?$/);
+  const sqlTime = sqlTimestamp
+    ? `${sqlTimestamp[1]}T${sqlTimestamp[2]}:${sqlTimestamp[3] || '00'}.${(sqlTimestamp[4] || '').padEnd(3, '0').slice(0, 3)}Z`
+    : value;
+  const date = new Date(sqlTime);
+  if (Number.isNaN(date.getTime())) return timestamp;
+
+  const indiaWallTime = new Date(date.getTime() + 330 * 60 * 1000);
+  return `${indiaWallTime.toISOString().replace(/Z$/, '')}+05:30`;
+}
+
 export function formatDueDateForDb(dueDate) {
   if (!dueDate) return null;
   if (typeof dueDate !== 'string') return null;
@@ -115,7 +131,18 @@ export async function queryWithFallback(primary, fallback) {
 }
 
 export function buildHistoryEvent({ prefix, id, role, actionType, title, description, projectName, packageName, status, timestamp, extra = {} }) {
-  return { id: `${prefix}-${id}`, role, actionType, title, description, projectName, packageName, status, timestamp, ...extra };
+  return {
+    id: `${prefix}-${id}`,
+    role,
+    actionType,
+    title,
+    description,
+    projectName,
+    packageName,
+    status,
+    timestamp: formatTimestampInIndia(timestamp),
+    ...extra,
+  };
 }
 
 export function hashPassword(password) {

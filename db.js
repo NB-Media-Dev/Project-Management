@@ -45,6 +45,14 @@ const pool = mysql.createPool({
   queueLimit: 0,
 });
 
+pool.on('connection', (connection) => {
+  connection.query("SET SESSION time_zone = '+00:00'", (err) => {
+    if (err) {
+      console.error('Failed to set database session timezone to UTC:', err.message);
+    }
+  });
+});
+
 pool.on('error', (err) => {
   console.error('Unexpected error on database pool:', err.message);
 });
