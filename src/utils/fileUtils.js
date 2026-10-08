@@ -77,6 +77,9 @@ export const getFileTypeDetails = (filename) => {
   }
 }; 
 
+const INDIA_TIME_ZONE = 'Asia/Kolkata';
+const INDIA_TIME_ZONE_OFFSET_MINUTES = 330;
+
 const parseDisplayDate = (value) => {
   if (!value) return null;
   if (value instanceof Date) return Number.isNaN(value.getTime()) ? null : value;
@@ -91,6 +94,7 @@ const parseDisplayDate = (value) => {
     const date = new Date(0);
     date.setUTCFullYear(Number(year), Number(month) - 1, Number(day));
     date.setUTCHours(Number(hour), Number(minute), Number(second), Number(fractional));
+    date.setUTCMinutes(date.getUTCMinutes() - INDIA_TIME_ZONE_OFFSET_MINUTES);
     return date;
   }
 
@@ -101,15 +105,15 @@ const parseDisplayDate = (value) => {
 export const formatTime = (isoString) => {
   const date = parseDisplayDate(isoString);
   if (!date) return '';
-  return date.toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit' }) + ' · ' +
-    date.toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' });
+  return date.toLocaleTimeString('en-IN', { timeZone: INDIA_TIME_ZONE, hour: '2-digit', minute: '2-digit' }) + ' · ' +
+    date.toLocaleDateString('en-IN', { timeZone: INDIA_TIME_ZONE });
 };
 
 export const formatTimestamp = (isoString) => {
   const date = parseDisplayDate(isoString);
   if (!date) return isoString || '';
-  return date.toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', month: 'short', day: 'numeric', year: 'numeric' }) + ' · ' +
-    date.toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit' });
+  return date.toLocaleDateString('en-IN', { timeZone: INDIA_TIME_ZONE, month: 'short', day: 'numeric', year: 'numeric' }) + ' · ' +
+    date.toLocaleTimeString('en-IN', { timeZone: INDIA_TIME_ZONE, hour: '2-digit', minute: '2-digit' });
 };
 
 export const formatFileSize = (bytes) => {
