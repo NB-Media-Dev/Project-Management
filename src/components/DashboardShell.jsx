@@ -21,12 +21,16 @@ function DashboardShell({
   const roleProp = currentUser?.role ?? '';
 
   useEffect(() => {
+    if (roleProp === 'Admin') return undefined;
+
     const userIdentifier = usernameProp || roleProp || 'user';
     const cleanup = initGlobalPopperListener(userIdentifier, packagesList);
     return cleanup;
   }, [usernameProp, roleProp, packagesList]);
 
   useEffect(() => {
+    if (roleProp === 'Admin') return;
+
     const userIdentifier = usernameProp || roleProp || 'user';
     if (packagesList && packagesList.length > 0) {
       checkUnseenDeployments(packagesList, userIdentifier);
